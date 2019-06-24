@@ -26,12 +26,14 @@ install:
   - cd funz-core
   - ant dist
   - cd ..
+  - cd $WD
+  - ant dist
+  - cd ..
   - git clone https://github.com/Funz/funz-client
   - cd funz-client
   - ant dist
   - cd ..
   - cd $WD
-  - ant dist
 
 before_script:
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi

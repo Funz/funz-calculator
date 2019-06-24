@@ -218,7 +218,7 @@ public class CalculatorTest {
         System.err.println("+++++++++++++++++++++++++ /stopFunzClient ");
     }
 
-    ////@Test
+    @Test
     public void testStartStopCalc() throws Exception {
         System.err.println("+++++++++++++++++++++++++++++ testStartStopCalc");
         Session.RESERVE_TIMEOUT = 2000;

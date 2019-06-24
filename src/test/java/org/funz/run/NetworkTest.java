@@ -131,7 +131,7 @@ public class NetworkTest {
 
     }
 
-    //@Test
+    @Test
     public void testListening() throws Exception {
 
         for (int j = 0; j < 10; j++) {
@@ -184,7 +184,7 @@ public class NetworkTest {
         // no more remaining thread
     }
 
-    //@Test
+    @Test
     public void testReserved() throws Exception {
         Project prj = new Project("test");
         prj.setCode("R");
@@ -210,7 +210,7 @@ public class NetworkTest {
         // no more remaining thread
     }
 
-    //@Test
+    @Test
     public void testCase() throws Exception {
         Project prj = new Project("test");
         prj.setCode("R");

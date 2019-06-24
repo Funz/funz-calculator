@@ -111,6 +111,9 @@ public class CalculatorTest {
         Thread.sleep(5000);
 
         calculator.askToStop("end of test1CalculatorNCalculations");
+        
+        Thread.sleep(5000);
+
         loop.join();
     }
 
@@ -215,7 +218,7 @@ public class CalculatorTest {
         System.err.println("+++++++++++++++++++++++++ /stopFunzClient ");
     }
 
-    //@Test
+    ////@Test
     public void testStartStopCalc() throws Exception {
         System.err.println("+++++++++++++++++++++++++++++ testStartStopCalc");
         Session.RESERVE_TIMEOUT = 2000;

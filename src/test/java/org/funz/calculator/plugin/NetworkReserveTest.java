@@ -35,10 +35,13 @@ public class NetworkReserveTest {
     public void tearDown() throws Exception {
         System.err.println("########################################### tearDown ###########################################");
         calculator.askToStop("tearDown");
+        try{
         for (Session s : sessions) {
             if (s != null) {
                 s.askToStop(true,"tearDown");
             }
+        }
+        }catch(Exception e){
         }
         tc.join();
 

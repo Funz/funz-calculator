@@ -1,0 +1,354 @@
+<project name="funz-calculator" default="help" basedir=".">
+
+    <property name="funz-root.dir" value="${basedir}/.." />
+    <property name="funz.properties" location="../funz-profile/funz.properties" />
+    <!-- funz dependent properties -->
+    <property file="${funz.properties}" />
+    <property file="funz-calculator.properties"/>
+    <!-- funz calculator dependent properties -->
+    <property file="configuration.properties"/>
+    <!-- user dependent properties -->
+
+    <path id="antcontrib.classpath">
+        <pathelement location="../funz-profile/lib/ant-contrib-0.6.jar" />
+    </path>
+
+    <property name="unit.test.jar" value="../funz-profile/lib/concutest-junit-4.7-withrt.jar" />
+    <!--property name="unit.test.jar" value="../funz-profile/lib/junit-4.3.jar" /-->
+
+    <taskdef name="for" taskname="for" classname="net.sf.antcontrib.logic.For" classpathref="antcontrib.classpath" />
+    <taskdef name="if" taskname="if" classname="net.sf.antcontrib.logic.IfTask" classpathref="antcontrib.classpath" />
+    <taskdef name="propertycopy" taskname="propertycopy" classname="net.sf.antcontrib.property.PropertyCopy" classpathref="antcontrib.classpath" />
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="antcontrib.classpath" />
+   
+        <!-- verify that the ${funz.properties} file has been set -->
+    <fail message="Set the funz properties file ${funz.properties} from funz-profile with a symbolic link in order to set project global configuration:
+          try something like   ln -s ../funz-profile/funz.properties    from the root directory">
+        <condition>
+            <not>
+                <and>
+                    <available file="${funz.properties}" type="file" />
+                </and>
+            </not>
+        </condition>
+    </fail>
+
+    <property name="Calculator.tmpl" location="${src.dir}/org/funz/calculator/Calculator.tmpl" />
+    <property name="Calculator.java" location="${src.dir}/org/funz/calculator/Calculator.java" />
+
+    <!-- classpathes -->
+    <path id="core.classpath">
+        <fileset dir="${core.lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="client.classpath">
+        <fileset dir="${client.lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+    
+    <path id="root.classpath">
+        <fileset dir="${lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <path id="compile.path" >
+        <path refid="core.classpath" />
+        <path refid="root.classpath" />
+    </path>
+
+    <path id="run.classpath">
+        <pathelement location="." />
+        <fileset dir="${dist.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+        <path refid="root.classpath" />
+        <path refid="core.classpath" />
+        <path refid="client.classpath" />
+    </path>
+
+    <path id="javadoc.jars">
+        <fileset dir="${javadoc.lib.dir}">
+            <include name="**/*.jar" />
+        </fileset>
+    </path>
+
+
+    <!-- clean targets -->
+    <target name="clean-build" description="clean up">
+        <delete dir="${build.dir}" failonerror="false" />
+        <delete dir="${build.ide.dir}" failonerror="false" />
+    </target>
+
+    <target name="clean-dist" description="clean up">
+        <delete dir="${dist.dir}" failonerror="false"/>
+    </target>
+
+    <target name="clean-doc" description="">
+        <delete dir="${doc.dir}" failonerror="false" />
+    </target>
+
+    <target name="clean-quotas">
+        <!-- nothing to remove -->
+    </target>
+
+    <target name="clean-all" depends="clean-build, clean-dist, clean-doc, clean-quotas" >
+        <delete dir="${javadoc.dir}" failonerror="false" />
+    </target>
+
+    <!--property name="monitor" value='"81.194.2.156:8001"' /-->
+    <!-- compilation and installation -->
+    <target name="resource" >
+        <if>
+            <equals arg1="$${monitor}" arg2="${monitor}" />
+            <then>
+                <echo message="No monitor"/>
+                <copy file="${Calculator.tmpl}" tofile="${Calculator.java}" overwrite="true" />
+                <replace file="${Calculator.java}" token="__MONITOR__" value='""' />
+            </then>
+            <else>
+                <echo message="Monitor: ${monitor}"/>
+                <copy file="${Calculator.tmpl}" tofile="${Calculator.java}" overwrite="true" />
+                <replace file="${Calculator.java}" token="__MONITOR__" value="${monitor}" />
+            </else>
+        </if>
+
+        <copy todir="${dist.lib.dir}">
+            <fileset dir="${core.lib.dir}">
+                <include name="*" />
+            </fileset>
+        </copy>
+        <copy todir="${dist.lib.dir}">
+            <fileset dir="${lib.dir}">
+                <include name="*" />
+            </fileset>
+        </copy>
+        <copy todir="${dist.scripts.dir}">
+            <fileset dir="${resources.scripts.dir}">
+                <exclude name="sge.sh" />
+                <exclude name="oar.sh" />
+                <include name="Funz*.sh" />
+                <include name="Funz*.bat" />
+            </fileset>
+        </copy>
+        <chmod perm="a+x">
+            <fileset dir="${dist.scripts.dir}">
+                <include name="Funz*.*" />
+            </fileset>
+        </chmod>
+        <copy todir="${dist.dir}">
+            <fileset dir="${resources.config.dir}">
+                <include name="calculator.xml" />
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="compile" description="compile the source ">
+        <mkdir dir="${build.dir}" />
+        <javac srcdir="${src.dir}"
+               destdir="${build.dir}"
+               debug="true"
+               encoding="ISO-8859-1"
+               source="${java.compiler.version}"
+               target="${java.compiler.version}" >
+            <classpath refid="compile.path" />
+        </javac>
+    </target>
+
+    <target name="compile-test" depends="compile" description="compile the test">
+        <mkdir dir="${build.dir}" />
+        <javac srcdir="${test.dir}"
+               destdir="${build.dir}"
+               debug="true"
+               encoding="ISO-8859-1"
+               source="${java.compiler.version}"
+               target="${java.compiler.version}" >
+            <classpath refid="compile.path" />
+            <classpath path="${build.dir}" />
+            <classpath path="${unit.test.jar}" />
+            <classpath path="../funz-client/build" />
+        </javac>
+    </target>
+
+    <target name="dist" depends="jar, resource, build-quotas" description="generate the distribution"/>
+
+    <!-- dist: compile the plugin classes and create 2 jars -->
+    <target name="dist-catncountplugin" depends="dist">
+        <path id="dist.libs">
+            <fileset dir="${dist.lib.dir}" includes="**/*.jar" />
+        </path>
+        <javac classpathref="dist.libs"
+           deprecation="true"
+               source="1.7"
+               target="1.7"
+               excludes="**/*IOPlugin*"
+               srcdir="${src.dir}"
+               destdir="${build.dir}"
+               encoding="ISO-8859-1"
+               debug="true" />
+        <jar destfile="${dist.dir}/plugins/calc/CatnCount.cplugin.jar">
+            <fileset dir="${build.dir}">
+                <include name="org/funz/**/CatnCount_CPlugin*.class" />
+            </fileset>
+        </jar>
+    </target>
+    
+    <target name="jar" depends="compile" description="generate the jar file">
+        <mkdir dir="${dist.dir}" />
+        <mkdir dir="${dist.lib.dir}" />
+        <mkdir dir="${dist.plugins.calculator.dir}" />
+        <jar destfile="${dist.lib.dir}/${calculator.jar.name}">
+            <fileset dir="${build.dir}">
+                <include name="org/funz/calculator/**" />
+            </fileset>
+            <manifest>
+                <attribute name="Main-Class" value="org.funz.calculator.Calculator" />
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- calculator quotas file management -->
+    <target name="build-quotas" depends="clean-quotas" description="generate the test configuration">
+        <!-- verify that the ${calculator.xml} file has been set -->
+        <fail message="Set a calculator.xml file using a symbolic link in order to set the client configuration
+              . Try something like     ln -s ${funz-calculator.dir}/src/main/resources/config/calculator.default.xml ${calculator.xml}    in the root directory">
+            <condition>
+                <not>
+                    <and>
+                        <available file="${calculator.xml}" type="file" />
+                    </and>
+                </not>
+            </condition>
+        </fail>
+
+        <!-- copy the calculator.xml -->
+        <copy todir="${dist.dir}" >
+            <fileset file="${calculator.xml}"/>
+        </copy>
+    </target>
+
+    <!-- run application -->
+    <target name="run" depends="dist">
+        <java classname="org.funz.calculator.Calculator" fork="true">
+            <classpath refid="run.classpath" />
+            <jvmarg value="-Dapp.home=${dist.dir}" />
+            <arg value="file:${calculator.xml}" />
+        </java>
+    </target>
+
+
+    <target name="test" depends="compile-test, dist, dist-catncountplugin">
+        
+        <fileset id="tests" dir="${build.dir}" includes="**/*Test.class" />
+        <!--property name="tests.p" refid="tests"/>
+        <echo message="${tests.p}"/-->
+
+        <pathconvert pathsep="${line.separator}" property="tests.list" refid="tests">
+            <map from="${build.dir}/" to=""/>
+        </pathconvert>
+        <!--echo message="${tests.list}"/>
+        <echo message="================"/-->
+        
+        <for list="${tests.list}" param="test.class" delimiter="${line.separator}">
+        <!--for list="org/funz/script/MathExpressionTest.class" param="test.class" delimiter="${line.separator}"-->
+        <!--for list="org/funz/api/BatchRunTest.class" param="test.class" delimiter="${line.separator}"-->
+            <sequential>
+                <echo message="@{test.class}"/>
+                <echo message="======================================="/>
+                <propertyregex property="test.class.name" input="@{test.class}" regexp="\.class" replace="" global="true" override="true"/>
+                <propertyregex property="test.class.id" input="${test.class.name}" regexp="/" replace="\." global="true" override="true"/>
+                <!--echo message="${test.class.id}"/-->
+                
+                <record name="${test.class.id}.txt" action="start"/>
+                <java classname="${test.class.id}" fork="true" timeout="360000" failonerror="false" resultproperty="@{test.class}.failed">
+                    <classpath refid="run.classpath" />
+                    <classpath path="${build.dir}" />
+                    <classpath path="${unit.test.jar}" />
+                    <classpath path="../funz-client/build" />
+                    <assertions>
+                        <enable/>
+                    </assertions>
+                </java>        
+                <record name="${test.class.id}.txt" action="stop"/>
+                <if>
+                    <equals arg1="${@{test.class}.failed}" arg2="0" />
+                    <then>
+                    </then>
+                    <else>
+                        <property name="failed" value="1" />
+                    </else>
+                </if>
+            </sequential>
+        </for>
+        <fail message="Test failure detected, check test results." if="failed" />
+    </target>
+
+    <!-- documentation generation -->
+    <target name="doc" depends="doc-javadoc" >
+    </target>
+
+
+    <target name="doc-javadoc" >
+        <mkdir dir="${javadoc.dir}" />
+        <javadoc sourcepath="${src.dir}" classpathref="compile.path" destdir="${javadoc.dir}" access="private">
+            <doclet name="org.umlgraph.doclet.UmlGraphDoc" pathref="javadoc.jars">
+                <param name="-attributes" />
+                <param name="-enumerations" />
+                <param name="-enumconstants" />
+                <param name="-operations" />
+                <param name="-qualify" />
+                <param name="-types" />
+                <param name="-visibility" />
+                <param name="-inferrel"/>
+                <param name="-inferdep"/>
+                <param name="-hide" value="java.*"/>
+                <param name="-collpackages" value="java.util.*"/>
+                <param name="-qualify"/>
+                <param name="-postfixpackage"/>
+                <param name="-nodefontsize" value="9"/>
+                <param name="-nodefontpackagesize" value="7"/>
+            </doclet>
+        </javadoc>
+        <apply executable="${dot.exec}" dest="${javadoc.dir}" parallel="false">
+            <arg value="-Tpng"/>
+            <arg value="-o"/>
+            <targetfile/>
+            <srcfile/>
+            <fileset dir="${javadoc.dir}" includes="*.dot"/>
+            <mapper type="glob" from="*.dot" to="*.png"/>
+        </apply>
+    </target>
+
+    <target name="doc-CPlugin" >
+        <mkdir dir="${javadoc.dir}" />
+        <mkdir dir="${javadoc.dir}/cplugin" />
+        <javadoc sourcepath="${src.dir}" packagenames="org.funz.calculator.plugin.*" classpathref="compile.path" destdir="${javadoc.dir}/cplugin" access="protected">
+        </javadoc>
+    </target>
+
+    <!-- help -->
+    <target name="help" description="display the help on standard output">
+        <echo message="********************************" />
+        <echo message="***" />
+        <echo message="***    Funz calculator" />
+        <echo message="***" />
+        <echo message="********************************" />
+        <echo />
+        <echo message="help			:	display this help" />
+        <echo />
+        <echo message="clean-all	:	clean everything that can be generated by ant targets" />
+        <echo message="clean-build  :   clean temp directories (./build, ./bin)" />
+        <echo message="clean-dist	:	clean distribution (./dist)" />
+        <echo message="clean-doc	:	clean documentation (./doc)" />
+        <echo />
+        <echo message="dist			:	generate a distribution" />
+        <echo message="run			:	run the application from the distribution" />
+        <echo message="doc			:	generate the code documentation" />
+
+    </target>
+
+
+</project>

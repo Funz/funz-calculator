@@ -57,7 +57,7 @@
     		<artifactId>funz-core</artifactId>
     		<version>1.9</version>
     		<scope>system</scope>
-    		<systemPath>${project.basedir}/../funz-core/dist/lib/funz-core-1.9.jar</systemPath>
+    		<systemPath>${project.basedir}/lib/funz-core-1.9.jar</systemPath>
 		</dependency>
 
 

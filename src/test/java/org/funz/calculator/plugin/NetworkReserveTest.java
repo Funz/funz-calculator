@@ -43,6 +43,14 @@ public class NetworkReserveTest {
         }
         }catch(Exception e){
         }
+        try{
+        for (Session s : sessions) {
+            if (s != null) {
+                s.join();
+            }
+        }
+        }catch(Exception e){
+        }
         tc.join();
 
         ui_client1.force_disconnect();

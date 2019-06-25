@@ -47,6 +47,7 @@ script:
   - ant test
 
 after_success:
+  - cp ../funz-core/dist/lib/funz-core-1.9.jar lib/.
   - "mvn cobertura:cobertura"
   - bash <(curl -s https://codecov.io/bash)
 

@@ -139,7 +139,9 @@ public class Calculator implements Protocol {
                     freecpu += cpu.getIdle();
                 }
             } catch (SigarException se) {
-                se.printStackTrace();
+                log("[SIGAR] cannot get system stats:" +se.getMessage());
+            } catch (UnsatisfiedLinkError le) {
+                log("[SIGAR] failed to get system stats:" +le.getMessage());
             }
         }
 

@@ -13,10 +13,10 @@ language: java
 #      # Pre-installed packages: https://docs.travis-ci.com/user/reference/windows/
 #      # use `choco` command
 jdk:
-  - oraclejdk8
+  - openjdk11
+#  - openjdk8
+#  - oraclejdk8
 #  - oraclejdk11
-#  - openjdk10
-#  - openjdk11
 
 install:
   - WD=$PWD
@@ -47,8 +47,7 @@ script:
   - ant test
 
 after_success:
-  - cp ../funz-core/dist/lib/funz-core-1.9.jar lib/.
-  - "mvn cobertura:cobertura"
+  - mvn cobertura:cobertura
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:

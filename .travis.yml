@@ -47,7 +47,7 @@ script:
   - ant test
 
 after_success:
-  - mvn initialize
+  - mvn initialize -U
   - mvn cobertura:cobertura
   - bash <(curl -s https://codecov.io/bash)
 

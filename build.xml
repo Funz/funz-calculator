@@ -1,4 +1,4 @@
-<project name="funz-calculator" default="help" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">>
+<project name="funz-calculator" default="help" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
 
     <property name="funz-root.dir" value="${basedir}/.." />
     <property name="funz.properties" location="../funz-profile/funz.properties" />

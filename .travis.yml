@@ -1,22 +1,35 @@
 language: java
-#matrix:
-#  include:
-#    - name: "Linux"
-#      os: linux
-#      dist: xenial
-#    - name: "MacOS"
-#      os: osx
-#      osx_image: xcode9.4
-#    - name: "Windows"
+matrix:
+  include:
+    - name: "Linux JDK8"
+      os: linux
+      dist: trusty
+      jdk:
+        - openjdk8
+      env:
+        - TRAVIS_DIST_NAME="trusty"
+    - name: "Linux JDK11"
+      os: linux
+      dist: xenial
+      jdk:
+        - openjdk11
+      env:
+        - TRAVIS_DIST_NAME="xenial"
+    - name: "MacOS JDK8"
+      os: osx
+      osx_image: xcode9.3
+    - name: "MacOS JDK11"
+      os: osx
+      osx_image: xcode10.1
+#    - name: "Windows" --- Not yet supported
 #      os: windows
-#      # Help : https://travis-ci.community/c/environments/windows
-#      # Pre-installed packages: https://docs.travis-ci.com/user/reference/windows/
-#      # use `choco` command
-jdk:
-  - openjdk8
-#  - openjdk11
-#  - oraclejdk8
-#  - oraclejdk11
+#      jdk:
+#        - oraclejdk8
+#        - oraclejdk11
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rm -f '/usr/local/include/c++'; brew install ant; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install ant -y; fi
 
 install:
   - WD=$PWD
@@ -38,8 +51,9 @@ install:
 before_script:
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rm -f '/usr/local/include/c++'; brew install r; fi
+  - if [[ "$TRAVIS_OSX_IMAGE" == "xcode9.3" ]]; then brew upgrade python; fi # to get python3 instead of 2 -> ok.py test working
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "deb https://cloud.r-project.org/bin/linux/ubuntu trusty-cran35/" | sudo tee -a /etc/apt/sources.list; fi
+  - if [[ "$TRAVIS_DIST_NAME" == "trusty" ]]; then echo "deb https://cloud.r-project.org/bin/linux/ubuntu trusty-cran35/" | sudo tee -a /etc/apt/sources.list; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install r-recommended -y; fi
 
@@ -47,8 +61,7 @@ script:
   - ant test
 
 after_success:
-  - mvn initialize -U
-  - mvn cobertura:cobertura
+  - ant coverage #mvn test
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:

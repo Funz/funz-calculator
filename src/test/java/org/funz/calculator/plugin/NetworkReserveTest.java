@@ -55,7 +55,7 @@ public class NetworkReserveTest {
 
         ui_client1.force_disconnect();
         ui_client2.force_disconnect();
-        Thread.sleep(Session.RESERVE_TIMEOUT / 2);
+        Thread.sleep(Session.RESERVE_TIMEOUT * 2);
 
         System.err.println("########################################### /tearDown ###########################################");
     }

@@ -160,11 +160,11 @@ public class NetworkTest {
 
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + ui_client1.getActivity());
             Client.CalculatorInfo info1 = new Client.CalculatorInfo();
-            assert ui_client1.getInfo(info1);
+            assert ui_client1.getInfo(info1) : "Failed getInfo at "+j;
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + info1);
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI2: " + ui_client2.getActivity());
             Client.CalculatorInfo info2 = new Client.CalculatorInfo();
-            assert ui_client2.getInfo(info2);
+            assert ui_client2.getInfo(info2) : "Failed getInfo at "+j;
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI2: " + info2);
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> C1: " + calculator.getActivity());
 
@@ -177,7 +177,7 @@ public class NetworkTest {
 
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + ui_client1.getActivity());
             Client.CalculatorInfo info1 = new Client.CalculatorInfo();
-            assert ui_client1.getInfo(info1);
+            assert ui_client1.getInfo(info1) : "Failed getInfo at "+j;
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + info1);
         }
 

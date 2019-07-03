@@ -4,8 +4,8 @@
     <property name="funz.properties" location="../funz-profile/funz.properties" />
     <!-- funz dependent properties -->
     <property file="${funz.properties}" />
-    <property file="funz-calculator.properties"/>
     <!-- funz calculator dependent properties -->
+    <property file="funz-calculator.properties"/>
 
     <path id="antcontrib.classpath">
         <pathelement location="../funz-profile/lib/ant-contrib-0.6.jar" />
@@ -78,7 +78,6 @@
         </fileset>
     </path>
 
-
     <!-- clean targets -->
     <target name="clean-build" description="clean up">
         <delete dir="${build.dir}" failonerror="false" />
@@ -101,8 +100,8 @@
         <delete dir="${javadoc.dir}" failonerror="false" />
     </target>
 
-    <!--property name="monitor" value='"81.194.2.156:8001"' /-->
     <!-- compilation and installation -->
+
     <target name="resource" >
         <if>
             <equals arg1="$${monitor}" arg2="${monitor}" />
@@ -255,12 +254,13 @@
         <echo message="================"/-->
         
         <for list="${tests.list}" param="test.class" delimiter="${line.separator}">
-        <!--for list="org/funz/script/MathExpressionTest.class" param="test.class" delimiter="${line.separator}"-->
-        <!--for list="org/funz/api/BatchRunTest.class" param="test.class" delimiter="${line.separator}"-->
             <sequential>
                 <echo message="@{test.class}"/>
                 <echo message="======================================="/>
+                <echo message="============= @{test.class} ============="/>
+                <echo message="========================================="/>
                 <propertyregex property="test.class.name" input="@{test.class}" regexp="\.class" replace="" global="true" override="true"/>
+                <!--echo message="${test.class.name}"/-->
                 <propertyregex property="test.class.id" input="${test.class.name}" regexp="/" replace="\." global="true" override="true"/>
                 <!--echo message="${test.class.id}"/-->
                 

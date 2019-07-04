@@ -155,6 +155,9 @@ public class NetworkReserveTest {
         }
         ui_client1.disconnect();
         assert !ui_client1.isConnected() : "Failed to disconnect";
+        
+        ui_client1.reserveTimeOut.end();
+        ui_client1.reserveTimeOut.join();
     }
 
     @Test

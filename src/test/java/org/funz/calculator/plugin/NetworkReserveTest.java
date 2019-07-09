@@ -161,6 +161,8 @@ public class NetworkReserveTest {
             ui_client1.reserveTimeOut.join();
         }
         if (ui_client2 != null && ui_client2.reserveTimeOut != null) {
+            ui_client2.disconnect();
+            assert !ui_client2.isConnected() : "Failed to disconnect 2";
             ui_client2.reserveTimeOut.end();
             ui_client2.reserveTimeOut.join();
         }

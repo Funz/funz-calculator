@@ -68,8 +68,8 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:
-  - mv dist Funz_calculator
-  - zip -r Funz_calculator.zip Funz_calculator
+  - mv dist Funz
+  - zip -r funz-calculator.zip Funz
 
 deploy:
   provider: releases
@@ -77,7 +77,7 @@ deploy:
   api_key:
     secure: E6RhJ6bvS8g9UZiCJUh31jqAJ0p6M1JMVqUrV1wKDbn7ua0oiDvM33e39vRhIUaTtsPcCVV9qzC7D4oU+VXhDa6/r3ZRrTBEwsOJ8A5y7DB8V2reKZ+4MweiJVGbj6Wky0bU/bbZQtJec+hSxOqFXbbnhgMC9H2fQRnB6JaPfMXIhpDfHpcKxbdHDowaoP40Oidwf0YCAb9EeEuCKehuJ4yR/lksCLYUYRKrNOEYv5E0cRmOoVYYF6abFclzOW3TmbvZC0qt/i3+zirJejKZkXA6PIQ4hrMSijDSfdSWufio6s7eEHpfe3VJdXc4IwwlFV+SzHonOLa1wq1FLQwUtrPx3JybSD70s+OVqvp+uQxyCnCyZoY7pWxy6jApc5wTf7YnjspLLUf20tuwe3tKR3/x+y99gnBO7W4dmRyVM5vaC/jxm97NIntjxbEQpBkaT+I4RYEnAtn46fAaOFG7W9u9c48PLOX+/JYG2qFXDBW1tRzygHeLMW2VgMc3RVjzxTFvVAPJKOunBzmSwHQM43OP6V8el6zjPeExlHl8y2r+6Uv6UNkTygzXzZWf7VKnjY4KMGhuascGz8kLaPrLSWYSCtN7XBqwYJXh/EprSbwd3wGESNlVvi7CLGA+t/LVd6YuekxLgV7UszaEeDnca38EPPzPQchP+SkpuQ7ZYxs=
   file_glob: true
-  file: Funz_calculator*.zip
+  file: funz-calculator*.zip
   on:
     tags: true
     branch: master

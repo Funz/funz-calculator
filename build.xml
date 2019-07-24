@@ -91,9 +91,7 @@
         <delete dir="${doc.dir}" failonerror="false" />
     </target>
 
-    <target name="clean" depends="clean-build, clean-dist, clean-doc" >
-        <delete dir="${javadoc.dir}" failonerror="false" />
-    </target>
+    <target name="clean" depends="clean-build, clean-dist, clean-doc" />
 
     <!-- compilation and installation -->
     <target name="compile" description="compile the source">
@@ -147,20 +145,8 @@
         </chmod>
     </target>
 
-    <!-- dist: compile the plugin classes and create 2 jars -->
-    <target name="dist-catncountplugin" depends="dist">
-        <path id="dist.libs">
-            <fileset dir="${dist.lib.dir}" includes="**/*.jar" />
-        </path>
-        <javac classpathref="dist.libs"
-           deprecation="true"
-               source="${java.compiler.version}"
-               target="${java.compiler.version}"
-               excludes="**/*IOPlugin*"
-               srcdir="${src.dir}"
-               destdir="${build.dir}"
-               encoding="ISO-8859-1"
-               debug="true" />
+    <!-- dist-*plugin: compile the plugin classes and create jars -->
+    <target name="dist-catncountplugin" depends="compile">
         <mkdir dir="${basedir}/plugins/calc/"/>
         <jar destfile="${basedir}/plugins/calc/CatnCount.cplugin.jar">
             <fileset dir="${build.dir}">
@@ -170,7 +156,7 @@
     </target>
     
     <!-- run application -->
-    <target name="run" depends="dist, dist-catncountplugin">
+    <target name="run">
         <java classname="org.funz.calculator.Calculator" fork="true">
             <classpath refid="run.classpath" />
             <jvmarg value="-Dapp.home=." />

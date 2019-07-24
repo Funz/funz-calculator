@@ -68,7 +68,7 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:
-  - mv dist Funz
+  - ant install
   - zip -r funz-calculator.zip Funz
 
 deploy:

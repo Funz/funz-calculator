@@ -143,6 +143,17 @@
                 <include name="*.bat" />
             </fileset>
         </chmod>
+
+        <copy todir="." >
+            <fileset file="${test.resources.dir}/*"/>
+        </copy>
+        <java classname="org.funz.conf.Configuration" fork="true" >
+            <classpath refid="client.classpath" />
+            <jvmarg value="-Dcharset=ISO-8859-1" />
+            <jvmarg value="-Dapp.home=." />
+            <arg value="${quotas.xml}" />
+            <redirector output="${quotas.hex}" />
+        </java>
     </target>
 
     <!-- dist-*plugin: compile the plugin classes and create jars -->

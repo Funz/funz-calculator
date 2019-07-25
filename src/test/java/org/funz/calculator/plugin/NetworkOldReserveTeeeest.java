@@ -54,7 +54,7 @@ public class NetworkOldReserveTeeeest {
 
         Session.RESERVE_TIMEOUT = 2000;
 
-        calculator = new Calculator("file:calculator.xml", new LogConsole(),new LogConsole());
+        calculator = new Calculator("file:dist/calculator.xml", new LogConsole(),new LogConsole());
         calculator.checkAvailability();
 
         tc = new Thread(new Runnable() {//mimic Calculator NetworkListener/Thread

@@ -33,7 +33,7 @@ public class CalculatorTest {
 
     static {
         System.setProperty("java.awt.headless", "true");
-        System.setProperty("app.home", "../funz-client/distest");
+        System.setProperty("app.home", "../funz-client/dist");
         Alert.setCollector(new AlertCollector() {
 
             @Override
@@ -88,7 +88,7 @@ public class CalculatorTest {
         System.err.println("+++++++++++++++++++++++++++ test1CalculatorNCalculations");
         Session.RESERVE_TIMEOUT = 5000;
 
-        final Calculator calculator = new Calculator("file:calculator.xml", new LogConsole(), new LogConsole());
+        final Calculator calculator = new Calculator("file:./dist/calculator.xml", new LogConsole(), new LogConsole());
 
         loop = new Thread(new Runnable() {
 
@@ -126,7 +126,7 @@ public class CalculatorTest {
         if (tmp_in.exists()) {
             tmp_in.delete();
         }
-        Disk.copyFile(new File("../funz-client/src/test/samples/branin.R"), tmp_in);
+        Disk.copyFile(new File("src/test/samples/branin.R"), tmp_in);
 
         IOPluginInterface plugin = IOPluginsLoader.newInstance("R", tmp_in);
         Project prj = ProjectController.createProject(tmp_in.getName(), tmp_in, "R", plugin);
@@ -223,7 +223,7 @@ public class CalculatorTest {
         System.err.println("+++++++++++++++++++++++++++++ testStartStopCalc");
         Session.RESERVE_TIMEOUT = 2000;
 
-        final Calculator calculator = new Calculator("file:calculator.xml", new LogConsole(),new LogConsole());
+        final Calculator calculator = new Calculator("file:dist/calculator.xml", new LogConsole(),new LogConsole());
 
         loop = new Thread(new Runnable() {
 

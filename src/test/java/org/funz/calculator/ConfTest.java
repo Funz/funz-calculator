@@ -39,7 +39,7 @@ public class ConfTest {
     public void setUp() throws Exception {
         Session.RESERVE_TIMEOUT = 2000;
 
-        calculator = new Calculator("file:calculator.xml",new LogConsole(),new LogConsole());
+        calculator = new Calculator("file:dist/calculator.xml",new LogConsole(),new LogConsole());
 
         loop = new Thread(new Runnable() {
 
@@ -81,7 +81,7 @@ public class ConfTest {
 
         assert ui_client.newCase(new HashMap()) : "Failed newCase";
 
-        assert ui_client.putFile(new File("src/test/resources/long.R"), new File("src/test/resources")) : "Failed putFile";
+        assert ui_client.putFile(new File("./src/test/resources/long.R"), new File("./src/test/resources")) : "Failed putFile";
 
         assert ui_client.execute("R", new Client.DataListener() {
 
@@ -113,7 +113,7 @@ public class ConfTest {
 
         assert ui_client.newCase(new HashMap()) : "Failed newCase";
 
-        assert ui_client.putFile(new File("src/test/resources/long.R"), new File("src/test/resources")) : "Failed putFile";
+        assert ui_client.putFile(new File("./src/test/resources/long.R"), new File("./src/test/resources")) : "Failed putFile";
 
         Thread t = new Thread(new Runnable() {
 

@@ -17,6 +17,6 @@
     <CODE name="cat"     command="cat" />
     <CODE name="mult"     command="./../mult.sh" />
     
-    <CODE name="CatnCount" cplugin="file:./plugins/calc/CatnCount.cplugin.jar"/>
+    <CODE name="CatnCount" cplugin="file:./dist/plugins/calc/CatnCount.cplugin.jar"/>
 
 </CALCULATOR>

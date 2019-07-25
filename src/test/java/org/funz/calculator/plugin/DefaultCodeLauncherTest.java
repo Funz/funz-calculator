@@ -28,7 +28,7 @@ public class DefaultCodeLauncherTest {
     public void testExecuteOK() throws Exception {
         System.err.println("++++++++++++++++++++++++++++++ testExecuteOK");
         String name = "ok";
-        File src = new File("src/test/resources/" + name + ".R");
+        File src = new File("./src/test/resources/" + name + ".R");
         File Rin = new File("tmp", name + ".R");
         Disk.copyFile(src, Rin);
         File Rout = new File("tmp", name + ".Rout");
@@ -63,7 +63,7 @@ public class DefaultCodeLauncherTest {
     public void testExecuteFAIL() throws Exception {
         System.err.println("++++++++++++++++++++++++++++++ testExecuteFAIL");
         String name = "fail";
-        File src = new File("src/test/resources/" + name + ".R");
+        File src = new File("./src/test/resources/" + name + ".R");
         File Rin = new File("tmp", name + ".R");
         Disk.copyFile(src, Rin);
         File Rout = new File("tmp", name + ".Rout");
@@ -97,7 +97,7 @@ public class DefaultCodeLauncherTest {
     public void testExecuteERROR() throws Exception {
         System.err.println("++++++++++++++++++++++++++++++ testExecuteERROR");
         String name = "error";
-        File src = new File("src/test/resources/" + name + ".R");
+        File src = new File("./src/test/resources/" + name + ".R");
         File Rin = new File("tmp", name + ".R");
         Disk.copyFile(src, Rin);
         File Rout = new File("tmp", name + ".Rout");

@@ -185,6 +185,10 @@
         <copy todir="." >
             <fileset file="${test.resources.dir}/*"/>
         </copy>
+
+        <copy todir="${dist.dir}" overwrite="true">
+            <fileset file="${test.config.dir}/*"/>
+        </copy>
         <!--java classname="org.funz.conf.Configuration" fork="true" >
             <classpath refid="client.classpath" />
             <jvmarg value="-Dcharset=ISO-8859-1" />

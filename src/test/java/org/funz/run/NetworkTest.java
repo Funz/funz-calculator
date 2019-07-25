@@ -60,7 +60,7 @@ public class NetworkTest {
         Session.RESERVE_TIMEOUT = 2000;
  Session.REQUEST_TIMEOUT = 10000;
  
-        calculator = new Calculator("file:calculator.xml", new LogConsole(), new LogConsole());
+        calculator = new Calculator("file:./dist/calculator.xml", new LogConsole(), new LogConsole());
         calculator.checkAvailability();
         sessions.clear();
 
@@ -222,7 +222,7 @@ public class NetworkTest {
 
         System.err.println("------------------------------------------------[CLIENT]>newCase " + ui_client1.newCase(new HashMap()));
 
-        System.err.println("------------------------------------------------[CLIENT]>putFile " + ui_client1.putFile(new File("../funz-client/src/test/samples/novar.R"), new File("../funz-client/src/test/samples/")));
+        System.err.println("------------------------------------------------[CLIENT]>putFile " + ui_client1.putFile(new File("../src/test/samples/novar.R"), new File("../src/test/samples/")));
 
         System.err.println("------------------------------------------------[CLIENT]>execute " + ui_client1.execute("R", new DataListener() {
             public void informationLineArrived(String str) {

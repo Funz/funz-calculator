@@ -65,7 +65,7 @@ after_success:
 
 before_deploy:
   - ant clean dist
-  - zip -r funz-calculator.zip dist/*
+  - cd dist; zip -r ../funz-calculator.zip *
 
 deploy:
   provider: releases

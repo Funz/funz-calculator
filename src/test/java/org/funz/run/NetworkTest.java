@@ -222,7 +222,7 @@ public class NetworkTest {
 
         System.err.println("------------------------------------------------[CLIENT]>newCase " + ui_client1.newCase(new HashMap()));
 
-        System.err.println("------------------------------------------------[CLIENT]>putFile " + ui_client1.putFile(new File("../src/test/samples/novar.R"), new File("../src/test/samples/")));
+        System.err.println("------------------------------------------------[CLIENT]>putFile " + ui_client1.putFile(new File("src/test/samples/novar.R"), new File("../src/test/samples/")));
 
         System.err.println("------------------------------------------------[CLIENT]>execute " + ui_client1.execute("R", new DataListener() {
             public void informationLineArrived(String str) {

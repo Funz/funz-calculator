@@ -152,7 +152,7 @@ public class ConfTest {
         Thread.sleep(1000);
 
         System.err.println("Update conf NOW !");
-        ASCII.saveFile(new File("calculator.xml"), getASCIIFileContent(new File("calculator.xml")).replace("$$", "$$$"));
+        ASCII.saveFile(new File("dist","calculator.xml"), getASCIIFileContent(new File("dist","calculator.xml")).replace("$$", "$$$"));
 
         Thread.sleep(15000);
         t.join();

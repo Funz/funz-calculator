@@ -1,0 +1,769 @@
+package org.funz.calculator;
+
+import java.net.MalformedURLException;
+import org.funz.calculator.network.Host;
+import org.funz.calculator.network.Session;
+import java.lang.Thread.State;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Properties;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.funz.Protocol;
+import org.funz.calculator.plugin.CalculatorPlugin;
+import org.funz.calculator.plugin.CodeLauncher;
+import org.funz.util.ASCII;
+import org.funz.util.Digest;
+import org.funz.util.Disk;
+import org.funz.util.TimePeriod;
+import org.funz.util.URLMethods;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.Locale;
+import org.apache.commons.exec.OS;
+import org.hyperic.sigar.CpuPerc;
+import org.funz.log.LogCollector;
+import org.funz.log.LogConsole;
+import org.funz.log.LogFile;
+import org.funz.log.LogNull;
+import org.funz.log.LogTicToc;
+
+/** Calculation agent */
+public class Calculator implements Protocol {
+
+    private static com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+    static long mem = -1;
+    static double freecpu = 0;
+    static double G = 1024 * 1024 * 1024;
+    static NumberFormat nf = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.ENGLISH));
+    private static Sigar sigar = new Sigar();
+
+    static String trimBin(long d) {
+        return nf.format((double) d / G);
+    }
+
+    static String trimPerc(long d) {
+        return nf.format((double) d / 100);
+    }
+
+    static String trim(double d) {
+        return nf.format((double) d);
+    }
+    private int _timeout;
+
+    /**
+     * @return the _activity
+     */
+    public String getActivity() {
+        return _activity;
+    }
+
+    void startTimeOut() {
+        if (TimeOut != null) {
+            return;
+        }
+        TimeOut = new Thread("TimeOut") {
+            @Override
+            public void run() {
+                try {
+                    log("Start TimeOut: " + (_timeout / 1000) + " s");
+                    Thread.sleep(_timeout);
+                    log("Finish TimeOut. Ask to stop.");
+                    askToStop("TimeOut expired");
+                } catch (InterruptedException ex) {
+                }
+            }
+
+            @Override
+            public void interrupt() {
+                super.interrupt();
+                log("Interrupt TimeOut");
+            }
+        };
+        TimeOut.start();
+    }
+
+    void stopTimeOut() {
+        if (TimeOut != null) {
+            TimeOut.interrupt();
+            TimeOut = null;
+        }
+    }
+    Thread TimeOut;
+
+    /**
+     * @param activity the _activity to set
+     */
+    public void setActivity(String activity, String from) {
+        //System.err("setActivity " + activity+" #"+from);
+        log("setActivity " + activity + " #" + from);
+        if (_timeout > 0) {
+            if (activity.equals(Calculator.IDLE_STATE)) {
+                startTimeOut();
+            } else {
+                stopTimeOut();
+            }
+        }
+
+        if (OS.isFamilyWindows()) {
+            mem = sys.getFreePhysicalMemorySize();
+            freecpu = (double) sys.getAvailableProcessors();//Math.max(0, (double) sys.getAvailableProcessors() - sys.getSystemLoadAverage());
+        } else {
+            try {
+                mem = sigar.getMem().getActualFree();
+                CpuPerc[] cpus = sigar.getCpuPercList();
+                freecpu = 0;
+                for (CpuPerc cpu : cpus) {
+                    freecpu += cpu.getIdle();
+                }
+            } catch (SigarException se) {
+                log("[SIGAR] cannot get system stats:" +se.getMessage());
+            } catch (UnsatisfiedLinkError le) {
+                log("[SIGAR] failed to get system stats:" +le.getMessage());
+            }
+        }
+
+        activity = activity + " (cpu=$$cpu$$;mem=$$mem$$;disk=$$disk$$;)";
+        if (freecpu <= 0) {
+            activity = activity.replace("$$cpu$$", "?");
+        } else {
+            activity = activity.replace("$$cpu$$", "" + trim(freecpu));
+        }
+
+        if (mem <= 0) {
+            activity = activity.replace("$$mem$$", "?");
+        } else {
+            activity = activity.replace("$$mem$$", "" + trimBin(mem));
+        }
+
+        if (_spool == null) {
+            activity = activity.replace("$$disk$$", "?");
+        } else {
+            activity = activity.replace("$$disk$$", "" + trimBin(new File(_spool).getFreeSpace()));
+        }
+
+        this._activity = activity;
+        for (Host h : _hosts) {
+            if (h != null) {
+                try {
+                    h.rebuildPacket();
+                } catch (Exception e) {
+                }
+            }
+        }
+    }
+
+    public class QSlots {
+
+        String command_getfree_qslots; //exemple pour SGE : a=`qstat -g c | tail -1`;echo ${a:46:7}
+        int min_free_qslots;
+
+        public QSlots(int m, String c) {
+            min_free_qslots = m;
+            command_getfree_qslots = c;
+        }
+    }
+
+    // socket print writer wrapper
+    // throws exception when socket is closed
+    public static class SocketWriter {
+
+        Socket sock;
+        PrintWriter w;
+
+        public SocketWriter(Socket s) throws IOException {
+            w = new PrintWriter(s.getOutputStream(), true);
+            sock = s;
+        }
+
+        public void flush() {
+            w.flush();
+        }
+
+        public void close() {
+            w.close();
+        }
+
+        public void println(int i) throws IOException {
+            //System.out("SOCK> " + i);
+            if (sock.isInputShutdown()) {
+                throw new IOException("Socket closed");
+            }
+            if (w.checkError()) {
+                throw new IOException("Write error");
+            }
+            w.println(i);
+        }
+
+        public void println(Object obj) throws IOException {
+            //System.out("SOCK> " + obj);
+            if (sock.isInputShutdown()) {
+                throw new IOException("Socket input closed");
+            }
+            if (sock.isOutputShutdown()) {
+                throw new IOException("Socket output closed");
+            }
+            if (sock.isClosed()) {
+                throw new IOException("Socket closed");
+            }
+            if (!sock.isConnected()) {
+                throw new IOException("Socket not connected");
+            }
+            if (w.checkError()) {
+                throw new IOException("Write error");
+            }
+            w.println(obj);
+        }
+    }
+    public static final String ELEM_CALCULATOR = "CALCULATOR", ELEM_HOST = "HOST", ELEM_CODE = "CODE", ELEM_TIMEUNAVB = "UNAVAILABLE_TIME", ELEM_TESTUAVB = "UNAVAILABLE_IF", ELEM_QSLOTS = "NEEDED_QSLOTS", ATTR_NAME = "name", ATTR_PLUGIN = "cplugin", ATTR_PORT = "port", ATTR_COMMAND = "command", ATTR_COMMENT = "comment", ATTR_SPOOL = "spool", ATTR_FROM = "from", ATTR_TEST = "test", ATTR_UNTIL = "until", ATTR_LOG = "log", ATTR_SECURE = "secure", ATTR_TIMEOUT = "timeout";
+    public static int PING_PERIOD = Protocol.PING_PERIOD;
+
+    public static void main(String args[]) {
+        try {
+            if (args.length != 1) {
+                System.err.println("usage: calculator configfile");
+                System.exit(1);
+            }
+
+            final Calculator calc = new Calculator(args[0], new LogConsole(), 
+                    new LogFile(new File(System.getProperty("java.io.tmpdir"), "calculator." + LogTicToc.T() + ".log")));
+            calc.runloop();
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+    }
+
+    public void runloop() throws InterruptedException {
+        log("Started");
+        out("Started");
+        //calc.run();
+        while (run()) {
+            Thread.sleep(PING_PERIOD);
+            log("Restarted");
+            out("Restarted");
+        }
+        out("Quit");
+        log("Quit");
+    }
+
+    public static String read(InputStream is) {
+        StringBuilder out = new StringBuilder();
+        BufferedInputStream bis = new BufferedInputStream(is);
+        int c;
+        try {
+            while ((c = bis.read()) != -1) {
+                out.append((char) c);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                bis.close();
+            } catch (IOException ex) {
+            }
+        }
+        return out.toString();
+    }
+    private String _activity;
+    public Calendar _calendar = Calendar.getInstance();
+    private final List<Session> _sessions = new LinkedList();
+    public Code _codes[];
+    public String _comment = "";
+    public String _conf;
+    public File _dir;
+    private Host _hosts[];
+    private volatile boolean _isAvailable = false;
+    public boolean _isSecure;
+    public byte _key[];
+    public volatile CodeLauncher _lastLauncher;
+    public volatile CodeLauncher _launcher;
+    public Object _launcherLock = new Object();
+    public Object _lock = new Object();
+    public LogCollector _log;
+    public LogCollector _outerr;
+    public String _name = "untitled";
+    public HashMap _plugins = new HashMap();
+    public int _port = -1;
+    public Session _reserver = null;
+    public String _secretCode;
+    public File _sessionDir;
+    /** Run this thread when system shuts down the process */
+    Thread _shutdownCleaner = new Thread() {
+
+        public void run() {
+            if (_dir != null) {
+                try {
+                    out("Running shutdown cleaner in " + _dir.getParentFile());
+                    Disk.removeDir(_dir.getParentFile());
+                } catch (Exception e) {
+                    err("Shutdown cleaner exception:" + e.toString());
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
+    public long _since = 0;
+    public ServerSocket _serversocket;
+    public String _spool;    //________________________________________________________________________________ MY CLIENT THREAD
+    //
+    public TimePeriod _unavailables[];
+    public String[] _unavailable_tests;
+    public Properties _vars;
+    byte[] md5conf;
+
+    /** Creates a server from an xml file. */
+    public Calculator(String conf, LogCollector outerr, LogCollector log) throws Exception {
+        _outerr=outerr;
+        _log=log==null?new LogNull("Calculator"):log;
+        
+        Runtime.getRuntime().addShutdownHook(_shutdownCleaner);
+        _since = Calendar.getInstance().getTimeInMillis();
+
+        _conf = conf;
+        md5conf = Digest.getSum(new URL(conf));
+        loadConf(conf);
+    }
+
+    public boolean isAvailable(){return _isAvailable;}
+
+    /** Checks whether the calculator is not inside an unavailable condition. */
+    public void checkAvailability() {
+        if (_unavailables == null || _unavailable_tests == null || _calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY || _calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
+            if (!_isAvailable) {
+                setActivity(IDLE_STATE,"checkAvailability");
+            }
+                //System.err("_isAvailable = true");
+            _isAvailable = true;
+            return;
+        }
+
+        boolean av = checkTimeAvailability() && checkTestAvailability();
+
+        if (av && (!_isAvailable)) {
+            setActivity(IDLE_STATE, "av && (!_isAvailable)");
+        } else if ((!av) && _isAvailable) {
+            setActivity(UNAVAILABLE_STATE, "(!av) && _isAvailable");
+            synchronized (_lock) {
+                if (_reserver != null) {
+                    _reserver.askToStop(false,"checkTimeAvailability() && checkTestAvailability()");
+                }
+                _reserver = null;
+            }
+        }
+                        //System.err(" _isAvailable = av = "+av);
+        _isAvailable = av;
+        return;
+    }
+
+    /** to support following line in calculator.xml: <UNAVAILABLE_TIME from="13:15" until="19:00" />
+     */
+    private boolean checkTimeAvailability() {
+        long now = _calendar.get(Calendar.HOUR_OF_DAY) * 3600000L + _calendar.get(Calendar.MINUTE) * 60000L;
+
+        boolean av = true;
+        for (int i = 0; i < _unavailables.length; i++) {
+            TimePeriod p = _unavailables[i];
+            if (p.isInside(now)) {
+                av = false;
+                break;
+            }
+        }
+
+        return av;
+    }
+
+    /** to support following line in calculator.xml:
+     * <!--UNAVAILABLE_IF test="a=`qstat -g c | tail -1`;numfreeslots=${a:46:7}; if [ $numfreeslots -le 1 ]; then echo TRUE; fi"/>
+     * <!--UNAVAILABLE_IF test="echo TRUE"/>
+     * <!--UNAVAILABLE_IF test="freecpu=`grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}' | cut -d. -f1`;if [ $freecpu -le 90 ]; then echo TRUE; fi"/>
+     */
+    private boolean checkTestAvailability() {
+
+        boolean av = true;
+        for (int i = 0; i < _unavailable_tests.length; i++) {
+            String test = _unavailable_tests[i];
+
+            File tmp = null;
+            try {
+                tmp = File.createTempFile("funzd_test-" + i + ".", null);
+                ASCII.saveFile(tmp, test);
+            } catch (IOException e1) {
+                err("tmp file " + tmp.getAbsolutePath() + " is not created. Test <" + test + "> is bypassed.");
+                if (tmp.isFile()) tmp.delete();
+                return true;
+            }
+
+            try {
+                StringBuffer out = new StringBuffer();
+
+                InputStream is = Runtime.getRuntime().exec(new String[]{"bash", tmp.getAbsolutePath()}).getInputStream();
+                BufferedInputStream bis = new BufferedInputStream(is);
+                int c;
+                try {
+                    while ((c = bis.read()) != -1) {
+                        out.append((char) c);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally{
+                    bis.close();
+                    is.close();
+                }
+
+                //out(">" + out.toString());
+                if (out.toString().startsWith("TRUE")) {
+                    av = false;
+                    break;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (tmp.isFile()) tmp.delete();
+            }
+        }
+        return av;
+    }
+
+    /**
+    @return conf has changed
+     */
+    boolean checkConf() {
+
+        byte[] newmd5 = md5conf;
+        try {
+            newmd5 = Digest.getSum(new URL(_conf));
+        } catch (MalformedURLException ex) {
+            log("! Impossible to read URL " + _conf + " :\n" + ex.getMessage());
+        }
+
+        if ((!Digest.equals(newmd5, md5conf) && _reserver == null) /*|| _serversocket == null || _serversocket.isClosed()*/) {
+
+            setActivity(UNAVAILABLE_STATE,"checkConf");
+            synchronized (_lock) {
+                if (_reserver != null) {
+                    _reserver.askToStop(false,"(!Digest.equals(newmd5, md5conf) && _reserver == null");
+                }
+                _reserver = null;
+            }
+
+            destroySessions("Calculator.checkConf digest updated");
+
+            try {
+                if (_serversocket != null) {
+                _serversocket.close();
+                }
+            } catch (IOException ex) {
+                log("!  Impossible to close Socket:\n" + ex.getMessage());
+
+            }
+            _serversocket = null;
+
+            try {
+                loadConf(_conf);
+                md5conf = newmd5;
+                setActivity(IDLE_STATE, "loadConf");
+                //run();//
+                return true;
+            } catch (Exception e) {
+                md5conf = newmd5;
+                setActivity(UNAVAILABLE_STATE, "loadConf/exception");
+                //run();//
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void destroySessions(String why) {
+        for (Iterator<Session> i = _sessions.iterator(); i.hasNext();) {
+            try{
+                i.next().askToStop(false, why);
+            }catch(ConcurrentModificationException e){
+                // just skip...
+            }
+        }
+    }
+
+    public void removeSession(Session s) {
+        synchronized (_sessions) {
+            _sessions.remove(s);
+        }
+    }
+
+    void addSession(Session s) {
+        synchronized (_sessions) {
+            _sessions.add(s);
+        }
+    }
+
+    // receive connections in this loop
+    private void waitNewClient() {
+       while (!askToStop) {
+            try {
+                //if (!_serversocket.isClosed()) {
+                out("Accept connection on local adress " + _serversocket.getLocalSocketAddress());
+
+                log("Open server socket... ("+_serversocket+")");
+                Session session = new Session(this, _serversocket.accept());
+                log("                  ...Server socket opened ("+_serversocket.toString()+") !");
+
+                addSession(session);
+
+                log("Starting client...");
+                session.start();
+                log("               ...Client started.");
+            } catch (Exception e) {
+                err("Failed to build client:" + e);
+                try {
+                    Thread.sleep(PING_PERIOD);
+                } catch (InterruptedException ex) {
+                }
+            }
+        }
+        out("Stop network client.");
+    }
+
+    static String[] monitors = "".split(",");
+
+    public void log(String s) {
+        _log.logMessage(LogCollector.SeverityLevel.INFO, true, LogTicToc.HMS()+" "+s);
+    }
+
+    public void err(String s) {
+        _log.logMessage(LogCollector.SeverityLevel.ERROR, true, s);
+        _outerr.logMessage(LogCollector.SeverityLevel.ERROR, true, s);
+    }
+
+    public void out(String s) {
+        _log.logMessage(LogCollector.SeverityLevel.INFO, true, s);
+        _outerr.logMessage(LogCollector.SeverityLevel.INFO, true, s);
+    }
+
+    void loadConf(String conf) throws Exception {
+        out("Loading configuration " + conf);
+        Document d = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(conf);
+        Element e = d.getDocumentElement();
+        if (!e.getTagName().equals(ELEM_CALCULATOR)) {
+            throw new Exception("wrong XML document " + e.getTagName() + " in file " + conf);
+        }
+
+        boolean trace = e.getAttribute(ATTR_LOG).trim().equals("true");
+
+        _name = e.getAttribute(ATTR_NAME).trim();
+        if (_name == null || _name.length() == 0) {
+            //err( "Calculator name must be defined and not empty !" );
+            //exit( 1 );
+            try {
+                _name = InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException ee) {
+                _name = "undefined-"+Math.floor(Math.random()*1000);
+                err("Calculator hostname not found ! Using "+_name); //System.exit(1);
+            }
+            log("Calculator name set to hostname");
+        }
+
+        try {
+            _timeout = Integer.parseInt(e.getAttribute(ATTR_TIMEOUT)) * 1000;
+        } catch (Exception ex) {
+            _timeout = -1;
+        }
+
+        _comment = e.getAttribute(ATTR_COMMENT);
+
+        try {
+            _port = Integer.parseInt(e.getAttribute(ATTR_PORT));
+        } catch (Exception ex) {
+            _port = 0;
+        }
+
+        _spool = e.getAttribute(ATTR_SPOOL);
+        if (_spool.length() == 0) {
+            _spool = System.getProperty("java.io.tmpdir") + File.separator + "funz";
+        }
+        String secure = e.getAttribute(ATTR_SECURE);
+        _isSecure = secure != null && (secure.equals("yes") || secure.equals("on") || secure.equals("true"));
+
+        log("Calculator " + _name);
+        log("Secure mode: " + (_isSecure ? "yes" : "no"));
+
+        NodeList codes = e.getElementsByTagName(ELEM_CODE);
+
+        if (codes.getLength() == 0) {
+            err("At least one CODE tag must be specified !");
+            throw new Exception("At least one CODE tag must be specified !"); //System.exit(1);
+        }
+
+        _codes = new Code[codes.getLength()];
+        for (int i = 0; i < codes.getLength(); i++) {
+            _codes[i] = new Code((Element) codes.item(i));
+            if (_codes[i].pluginURL != null && _codes[i].pluginURL.length() > 0) {
+                try {
+                    CalculatorPlugin cp = (CalculatorPlugin) URLMethods.scanURLJar(_codes[i].pluginURL, "org.funz.calculator.plugin.CalculatorPlugin");
+                    log("+ found plugin " + _codes[i].pluginURL + " (class " + cp.getClass().getName() + ")");
+                    _plugins.put(_codes[i].pluginURL, cp);
+                } catch (Exception ee) {
+                    log("- ignored plugin " + _codes[i].pluginURL + ": " + ee.getMessage());
+                }
+            }
+        }
+
+        if (_serversocket!=null) _serversocket.close(); // if reloading...
+        _serversocket = new ServerSocket(_port) {
+            @Override
+            public String toString() {
+                return "Server socket on port "+_port+" "+super.toString();
+            }
+        };
+        _port = _serversocket.getLocalPort();
+
+        NodeList hosts = e.getElementsByTagName(ELEM_HOST);
+
+        if (hosts.getLength() == 0) {
+            //System.err("At least one HOST tag must be specified !");
+            throw new IllegalArgumentException("At least one HOST tag must be specified !"); //System.exit(1);
+        }
+
+        //build permutation array (sample without replacement) to provide more equality between all hosts when ping is performed
+        int[] perm = new int[hosts.getLength()];
+        for (int i = 0; i < perm.length; i++) {
+            perm[i] = i;
+        }
+        for (int i = 0; i < perm.length; i++) {
+            int peer = (int) Math.floor(Math.random() * perm.length);
+            int swap = perm[i];
+            perm[i] = perm[peer];
+            perm[peer] = swap;
+        }
+
+        LinkedList<String> _monitors = new LinkedList<String>();
+        for (String m : monitors) {
+            if (m != null && m.length() > 0 && m.contains(":")) {
+                _monitors.add(m);
+            }
+        }
+        _hosts = new Host[hosts.getLength() + _monitors.size()];
+        for (int i = 0; i < _monitors.size(); i++) {
+            log("using monitor " + _monitors.get(i));
+            _hosts[i + _monitors.size()] = new Host(this, _monitors.get(i));
+        }
+        for (int i = 0; i < hosts.getLength(); i++) {
+            _hosts[perm[i]] = new Host(this, (Element) hosts.item(i));
+        }
+
+        NodeList unavb = e.getElementsByTagName(ELEM_TIMEUNAVB);
+        _unavailables = new TimePeriod[unavb.getLength()];
+        for (int i = 0; i < unavb.getLength(); i++) {
+            _unavailables[i] = new TimePeriod(((Element) unavb.item(i)).getAttribute(ATTR_FROM), ((Element) unavb.item(i)).getAttribute(ATTR_UNTIL));
+        }
+
+        NodeList unavb_if = e.getElementsByTagName(ELEM_TESTUAVB);
+        _unavailable_tests = new String[unavb_if.getLength()];
+        for (int i = 0; i < unavb_if.getLength(); i++) {
+            _unavailable_tests[i] = ((Element) unavb_if.item(i)).getAttribute(ATTR_TEST);
+        }
+    }
+    private volatile boolean askToStop = false;
+
+    public boolean isAskToStop() {
+        return askToStop;
+    }
+
+    public void askToStop(String why) {
+        err("Calculator.askToStop because " + why);
+        askToStop = true;
+        err("Session: " + _reserver);
+
+        try {
+            _serversocket.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        
+        if (_reserver != null) {
+            _reserver.askToStop(true,"Calculator.askToStop because " + why);
+
+        }
+
+        //synchronized (this) {
+        //    notifyAll();
+        //}
+        
+        destroySessions("Calculator.askToStop because "+why);
+        
+        try {
+            log("NetworkListener join...");
+            NetworkListener.join();            
+            log("NetworkListener     ...joined");
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
+    }
+    public final Thread NetworkListener = new Thread("NetworkListener") {
+
+        public void run() {
+            waitNewClient();
+        }
+    };
+
+    /** main loop */
+    /**
+    @return restart or not
+     */
+    public boolean run() {
+        if (NetworkListener.getState().equals(State.NEW)) {
+            NetworkListener.start();
+        }
+
+        while (!askToStop) {
+            // notify hosts
+            checkAvailability();
+            boolean restart = checkConf();
+            if (restart) {
+                log("(!) Ask for restart...");
+                return true;
+            }
+            for (int i = 0; i < _hosts.length; i++) {
+                Host h = _hosts[i];
+                if (h != null && !h.connected) {
+                    h.ping();
+                }
+            }
+
+            try {
+                synchronized (this) {
+                    wait(PING_PERIOD);
+                }
+            } catch (Exception ee) {
+                ee.printStackTrace();
+            }
+
+        }
+        log("Quit run loop");
+        return false;
+    }
+}

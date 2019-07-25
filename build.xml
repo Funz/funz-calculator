@@ -50,7 +50,7 @@
         </fileset>
     </path>
     
-    <path id="root.classpath">
+    <path id="lib.classpath">
         <fileset dir="${lib.dir}">
             <include name="**/*.jar"/>
         </fileset>
@@ -58,23 +58,7 @@
 
     <path id="compile.path" >
         <path refid="core.classpath" />
-        <path refid="root.classpath" />
-    </path>
-
-    <path id="run.classpath">
-        <pathelement location="." />
-        <fileset dir="${dist.dir}">
-            <include name="**/*.jar"/>
-        </fileset>
-        <path refid="root.classpath" />
-        <path refid="core.classpath" />
-        <path refid="client.classpath" />
-    </path>
-
-    <path id="javadoc.jars">
-        <fileset dir="${javadoc.lib.dir}">
-            <include name="**/*.jar" />
-        </fileset>
+        <path refid="lib.classpath" />
     </path>
 
     <!-- clean targets -->
@@ -120,61 +104,6 @@
         </javac>
     </target>
 
-    <target name="compile-test" depends="compile" description="compile the test">
-        <mkdir dir="${build.dir}" />
-        <javac srcdir="${test.dir}"
-               destdir="${build.dir}"
-               debug="true"
-               encoding="ISO-8859-1"
-               source="${java.compiler.version}"
-               target="${java.compiler.version}" >
-            <classpath refid="compile.path" />
-            <classpath path="${build.dir}" />
-            <classpath path="${unit.test.jar}" />
-            <classpath path="../funz-client/build" />
-        </javac>
-
-        <copy todir="." >
-            <fileset file="${test.resources.dir}/*"/>
-        </copy>
-        <chmod perm="a+x">
-            <fileset dir=".">
-                <include name="*.sh" />
-                <include name="*.bat" />
-            </fileset>
-        </chmod>
-
-        <copy todir="." >
-            <fileset file="${test.resources.dir}/*"/>
-        </copy>
-        <java classname="org.funz.conf.Configuration" fork="true" >
-            <classpath refid="client.classpath" />
-            <jvmarg value="-Dcharset=ISO-8859-1" />
-            <jvmarg value="-Dapp.home=." />
-            <arg value="${quotas.xml}" />
-            <redirector output="${quotas.hex}" />
-        </java>
-    </target>
-
-    <!-- dist-*plugin: compile the plugin classes and create jars -->
-    <target name="dist-catncountplugin" depends="compile">
-        <mkdir dir="${basedir}/plugins/calc/"/>
-        <jar destfile="${basedir}/plugins/calc/CatnCount.cplugin.jar">
-            <fileset dir="${build.dir}">
-                <include name="org/funz/**/CatnCount_CPlugin*.class" />
-            </fileset>
-        </jar>
-    </target>
-    
-    <!-- run application -->
-    <target name="run">
-        <java classname="org.funz.calculator.Calculator" fork="true">
-            <classpath refid="run.classpath" />
-            <jvmarg value="-Dapp.home=." />
-            <arg value="file:${calculator.xml}" />
-        </java>
-    </target>
-
     <target name="dist" depends="compile" description="generate the distribution">
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${dist.lib.dir}" />
@@ -189,11 +118,11 @@
         </jar>
 
         <copy todir="${dist.dir}" overwrite="true">
-            <fileset file="${resources.config.dir}/${calculator.xml}"/>
+            <fileset file="${config.dir}/${calculator.xml}"/>
         </copy>
 
         <copy todir="${dist.dir}" overwrite="true">
-            <fileset file="${resources.scripts.dir}/Funz*"/>
+            <fileset file="${scripts.dir}/Funz*"/>
         </copy>
         <chmod perm="a+x">
             <fileset dir="${dist.dir}">
@@ -203,7 +132,7 @@
 
         <mkdir dir="${dist.scripts.dir}" />
         <copy todir="${dist.scripts.dir}" overwrite="true">
-            <fileset dir="${resources.scripts.dir}">
+            <fileset dir="${scripts.dir}">
                 <include name="*"/>
                 <exclude name="*Funz*"/>
             </fileset>
@@ -228,8 +157,50 @@
         </copy>
     </target>
 
-    <target name="test" depends="compile-test, dist-catncountplugin">
-        
+    <target name="compile-test" depends="compile" description="compile the test">
+        <javac srcdir="${test.dir}"
+               destdir="${build.dir}"
+               debug="true"
+               encoding="ISO-8859-1"
+               source="${java.compiler.version}"
+               target="${java.compiler.version}" >
+            <classpath refid="compile.path" />
+            <classpath path="${build.dir}" />
+            <classpath path="${unit.test.jar}" />
+            <classpath path="../funz-client/build" />
+        </javac>
+    </target>
+
+    <target name="dist-test" depends="dist, compile-test" description="add the test resources to dist">
+        <copy todir="." >
+            <fileset file="${test.resources.dir}/*"/>
+        </copy>
+        <chmod perm="a+x">
+            <fileset dir=".">
+                <include name="*.sh" />
+                <include name="*.bat" />
+            </fileset>
+        </chmod>
+
+        <copy todir="." >
+            <fileset file="${test.resources.dir}/*"/>
+        </copy>
+        <!--java classname="org.funz.conf.Configuration" fork="true" >
+            <classpath refid="client.classpath" />
+            <jvmarg value="-Dcharset=ISO-8859-1" />
+            <arg value="${test.config.dir}/${quotas.xml}" />
+            <redirector output="${dist.dir}/${quotas.hex}" />
+        </java-->
+
+        <jar destfile="${dist.dir}/plugins/calc/CatnCount.cplugin.jar">
+            <fileset dir="${build.dir}">
+                <include name="org/funz/**/CatnCount_CPlugin*.class" />
+            </fileset>
+        </jar>
+    </target>
+
+    <target name="test" depends="dist-test, compile-test">
+
         <fileset id="tests" dir="${build.dir}" includes="**/*Test.class" />
         <!--property name="tests.p" refid="tests"/>
         <echo message="${tests.p}"/-->
@@ -242,7 +213,6 @@
         
         <for list="${tests.list}" param="test.class" delimiter="${line.separator}">
             <sequential>
-                <echo message="@{test.class}"/>
                 <echo message="======================================="/>
                 <echo message="============= @{test.class} ============="/>
                 <echo message="========================================="/>
@@ -252,12 +222,13 @@
                 <!--echo message="${test.class.id}"/-->
                 
                 <record name="${test.class.id}.txt" action="start"/>
-                <jacoco:coverage>  
+                <jacoco:coverage>
                 <java classname="${test.class.id}" fork="true" timeout="360000" failonerror="false" resultproperty="@{test.class}.failed">
-                    <classpath refid="run.classpath" />
+                    <classpath refid="lib.classpath" />
+                    <classpath refid="core.classpath" />
+                    <classpath refid="client.classpath" />
                     <classpath path="${build.dir}" />
                     <classpath path="${unit.test.jar}" />
-                    <classpath path="../funz-client/build" />
                     <assertions>
                         <enable/>
                     </assertions>
@@ -309,6 +280,16 @@
         <mkdir dir="${doc.dir}/cplugin" />
         <javadoc sourcepath="${src.dir}" packagenames="org.funz.calculator.plugin.*" classpathref="compile.path" destdir="${doc.dir}/cplugin" access="protected"/>
     </target>
+    
+    <!-- run application -->
+    <target name="run-calculator">
+        <java classname="org.funz.calculator.Calculator" fork="true">
+            <classpath refid="compile.path" />
+            <classpath path="${build.dir}" />
+            <jvmarg value="-Dapp.home=." />
+            <arg value="file:${calculator.xml}" />
+        </java>
+    </target>
 
     <!-- help -->
     <target name="help" description="display the help on standard output">
@@ -316,12 +297,12 @@
         <echo message="        Funz calculator" />
         <echo message="********************************" />
         <echo />
-        <echo message="help			:	display this help" />
-        <echo message="clean    	:	clean everything that can be generated by ant targets" />
-        <echo message="dist			:	generate a distribution" />
-        <echo message="test			:	run test" />
-        <echo message="run			:	run the application" />
-        <echo message="doc			:	generate the code documentation" />
+        <echo message="help			  :	display this help" />
+        <echo message="clean          :	clean everything that can be generated by ant targets" />
+        <echo message="dist		  	  :	generate a distribution" />
+        <echo message="test			  :	run tests" />
+        <echo message="run-calculator :	run the application" />
+        <echo message="doc			  :	generate the code documentation" />
     </target>
 
 

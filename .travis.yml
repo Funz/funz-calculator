@@ -44,7 +44,7 @@ install:
   - cd ..
   - git clone https://github.com/Funz/funz-client
   - cd funz-client
-  - ant dist
+  - ant dist-test
   - cd ..
   - cd $WD
 
@@ -64,7 +64,7 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:
-  - ant dist
+  - ant clean dist
   - zip -r funz-calculator.zip dist/*
 
 deploy:

@@ -33,7 +33,7 @@ public class CalculatorTest {
 
     static {
         System.setProperty("java.awt.headless", "true");
-        System.setProperty("app.home", "../funz-client/dist");
+        System.setProperty("app.home", "../funz-client/distest");
         Alert.setCollector(new AlertCollector() {
 
             @Override
@@ -126,7 +126,7 @@ public class CalculatorTest {
         if (tmp_in.exists()) {
             tmp_in.delete();
         }
-        Disk.copyFile(new File("../funz-client/src/main/resources/samples/branin.R"), tmp_in);
+        Disk.copyFile(new File("../funz-client/src/test/samples/branin.R"), tmp_in);
 
         IOPluginInterface plugin = IOPluginsLoader.newInstance("R", tmp_in);
         Project prj = ProjectController.createProject(tmp_in.getName(), tmp_in, "R", plugin);
@@ -193,10 +193,10 @@ public class CalculatorTest {
         System.err.println("+++++++++++++++++++++++++ startFunzClient ");
 
         System.setProperty("verbosity", "10");
-        if (!new File("../funz-client", "quotas.hex").exists()) {
+        if (!new File(System.getProperty("app.home"), "quotas.hex").exists()) {
             assert false : "No conf file";
         }
-        Configuration c = new Configuration(new File("../funz-client", "quotas.hex"), new LogConsole() {
+        Configuration c = new Configuration(new File(System.getProperty("app.home"), "quotas.hex"), new LogConsole() {
 
             @Override
             public void logMessage(LogCollector.SeverityLevel severity, boolean sync, String message) {

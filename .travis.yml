@@ -65,7 +65,7 @@ after_success:
 
 before_deploy:
   - ant clean dist
-  - cd dist; zip -r ../funz-core.zip ./*
+  - cd dist; zip -r ../funz-calculator.zip ./*
   - cd ..
 
 deploy:

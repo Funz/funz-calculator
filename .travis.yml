@@ -18,7 +18,7 @@ matrix:
 #        - global: JAVA_OPTS=-Xmx4g
     - name: "MacOS JDK8"
       os: osx
-      osx_image: xcode9.3
+      osx_image: xcode8.3
 #    - name: "MacOS JDK11"
 #      os: osx
 #      osx_image: xcode10.1

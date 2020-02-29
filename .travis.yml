@@ -45,7 +45,7 @@ install:
   - cd ..
   - git clone https://github.com/Funz/funz-client
   - cd funz-client
-  - ANT_OPTS="-Xss4M"; ant dist-test
+  - ANT_OPTS="-Xss4M -Xmx4g"; ant dist-test
   - cd ..
   - cd $WD
 

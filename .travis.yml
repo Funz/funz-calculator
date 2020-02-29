@@ -33,6 +33,7 @@ matrix:
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait brew install ant; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install ant -y; fi
+  - sudo cat /proc/meminfo
 
 install:
   - WD=$PWD
@@ -40,11 +41,11 @@ install:
   - git clone https://github.com/Funz/funz-profile
   - git clone https://github.com/Funz/funz-core
   - cd funz-core
-  - ant dist
+  - ANT_OPTS="-Xss4M"; ant dist
   - cd ..
   - git clone https://github.com/Funz/funz-client
   - cd funz-client
-  - ant dist-test
+  - ANT_OPTS="-Xss4M"; ant dist-test
   - cd ..
   - cd $WD
 
@@ -57,10 +58,10 @@ before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install r-recommended --allow-unauthenticated -y; fi
 
 script: 
-  - ant test
+  - ANT_OPTS="-Xss4M"; ant test
 
 after_success:
-  - ant coverage
+  - ANT_OPTS="-Xss4M"; ant coverage
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:

@@ -8,22 +8,22 @@ matrix:
         - openjdk8
       env:
         - TRAVIS_DIST_NAME="trusty"
-#    - name: "Linux JDK11"
-#      os: linux
-#      dist: xenial
-#      jdk:
-#        - openjdk11
-#      env:
-#        - TRAVIS_DIST_NAME="xenial"
-#        - global: JAVA_OPTS=-Xmx4g
+    - name: "Linux JDK11"
+      os: linux
+      dist: xenial
+      jdk:
+        - openjdk11
+      env:
+        - TRAVIS_DIST_NAME="xenial"
+        - global: JAVA_OPTS=-Xmx4g
     - name: "MacOS JDK8"
       os: osx
       osx_image: xcode9.3
-#    - name: "MacOS JDK11"
-#      os: osx
-#      osx_image: xcode10.1
-#      env:
-#        - global: JAVA_OPTS=-Xmx4g
+    - name: "MacOS JDK11"
+      os: osx
+      osx_image: xcode10.1
+      env:
+        - global: JAVA_OPTS=-Xmx4g
 #    - name: "Windows" --- Not yet supported
 #      os: windows
 #      jdk:

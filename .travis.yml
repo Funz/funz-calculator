@@ -15,7 +15,8 @@ matrix:
         - openjdk11
       env:
         - TRAVIS_DIST_NAME="xenial"
-        - global: JAVA_OPTS=-Xmx4g
+        - global: JAVA_OPTS=-"-Xmx4g -Xss4M"
+        - global: ANT_OPTS="-Xmx4g -Xss4M"
     - name: "MacOS JDK8"
       os: osx
       osx_image: xcode9.3
@@ -23,7 +24,8 @@ matrix:
       os: osx
       osx_image: xcode10.1
       env:
-        - global: JAVA_OPTS=-Xmx4g
+        - global: JAVA_OPTS=-"-Xmx4g -Xss4M"
+        - global: ANT_OPTS="-Xmx4g -Xss4M"
 #    - name: "Windows" --- Not yet supported
 #      os: windows
 #      jdk:
@@ -31,7 +33,7 @@ matrix:
 #        - oraclejdk11
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait HOMEBREW_NO_AUTO_UPDATE=1 brew install ant; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait brew install ant; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install ant -y; fi
   - sudo cat /proc/meminfo
 
@@ -41,27 +43,27 @@ install:
   - git clone https://github.com/Funz/funz-profile
   - git clone https://github.com/Funz/funz-core
   - cd funz-core
-  - ANT_OPTS="-Xss4M"; ant dist
+  - ant dist
   - cd ..
   - git clone https://github.com/Funz/funz-client
   - cd funz-client
-  - ANT_OPTS="-Xss4M -Xmx4g"; ant dist-test
+  - ant dist-test
   - cd ..
   - cd $WD
 
 before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rm -f '/usr/local/include/c++'; travis_wait HOMEBREW_NO_AUTO_UPDATE=1 brew install r; fi
-  - if [[ "$TRAVIS_OSX_IMAGE" == "xcode9.3" ]]; then brew uninstall --ignore-dependencies --force python; HOMEBREW_NO_AUTO_UPDATE=1 brew install python3; fi # to get python3 instead of 2 -> ok.py test working
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rm -f '/usr/local/include/c++'; travis_wait brew install r; fi
+  - if [[ "$TRAVIS_OSX_IMAGE" == "xcode9.3" ]]; then brew uninstall --ignore-dependencies --force python; brew install python3; fi # to get python3 instead of 2 -> ok.py test working
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9; fi
   - if [[ "$TRAVIS_DIST_NAME" == "trusty" ]]; then echo "deb https://cloud.r-project.org/bin/linux/ubuntu trusty-cran35/" | sudo tee -a /etc/apt/sources.list; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install r-recommended --allow-unauthenticated -y; fi
 
 script: 
-  - ANT_OPTS="-Xss4M"; ant test
+  - ant test
 
 after_success:
-  - ANT_OPTS="-Xss4M"; ant coverage
+  - ant coverage
   - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:

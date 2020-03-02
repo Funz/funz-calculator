@@ -15,8 +15,8 @@ matrix:
         - openjdk11
       env:
         - TRAVIS_DIST_NAME="xenial"
-        - global: JAVA_OPTS=-"-Xmx4g -Xss4M"
-        - global: ANT_OPTS="-Xmx4g -Xss4M"
+        - global: JAVA_OPTS=-"-Xmx6G -Xss1G"
+        - global: ANT_OPTS="-Xmx6G -Xss1G"
     - name: "MacOS JDK8"
       os: osx
       osx_image: xcode9.3
@@ -24,8 +24,8 @@ matrix:
       os: osx
       osx_image: xcode10.1
       env:
-        - global: JAVA_OPTS=-"-Xmx4g -Xss4M"
-        - global: ANT_OPTS="-Xmx4g -Xss4M"
+        - global: JAVA_OPTS=-"-Xmx6G -Xss1G"
+        - global: ANT_OPTS="-Xmx6G -Xss1G"
 #    - name: "Windows" --- Not yet supported
 #      os: windows
 #      jdk:

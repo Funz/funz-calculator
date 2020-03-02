@@ -28,16 +28,16 @@ matrix:
       env:
         - global: JAVA_OPTS=-"-Xmx6G -Xss1G"
         - global: ANT_OPTS="-Xmx6G -Xss1G"
-    - name: "Windows"
-      os: windows
-      jdk:
-        - oraclejdk8
-        - oraclejdk11
+#    - name: "Windows" -- Not yet working
+#      os: windows
+#      jdk:
+#        - oraclejdk8
+#        - oraclejdk11
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait brew update; brew install ant; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install ant -y; fi
-  - sudo cat /proc/meminfo
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo cat /proc/meminfo; fi
 
 install:
   - WD=$PWD
@@ -49,7 +49,7 @@ install:
   - cd ..
   - git clone https://github.com/Funz/funz-client
   - cd funz-client
-  - ant dist-test
+  - ANT_OPTS="-Xmx6G -Xss1G" ant dist-test
   - cd ..
   - cd $WD
 

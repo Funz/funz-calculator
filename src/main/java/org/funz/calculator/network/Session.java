@@ -399,10 +399,18 @@ public class Session extends Thread implements DataChannel {
 
             if (this.calculator._lastLauncher.failed() && !_killed) {
                 _writer.println(Calculator.RET_NO);
-                _writer.println("reason: " + this.calculator._lastLauncher.getReason().replace("\n", ""));
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
-                err("run failed: " + this.calculator._lastLauncher.getReason());
+                if(this.calculator._lastLauncher.getReason() == null) {
+                    _writer.println("reason ?");
+                    _writer.println(Calculator.END_OF_REQ);
+                    _writer.flush();
+                    err("run failed: null");
+                } else {
+                    _writer.println("reason: " + this.calculator._lastLauncher.getReason().replace("\n", ""));
+                    _writer.println(Calculator.END_OF_REQ);
+                    _writer.flush();
+                    err("run failed: " + this.calculator._lastLauncher.getReason());
+                }
+
 
                 /*synchronized (this.calculator._lock) {
                  this.calculator._reserver = null;

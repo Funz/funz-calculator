@@ -1,0 +1,11 @@
+[Unit]
+Description=Funz Daemon service
+After=network.target
+SourcePath=/etc/init.d/funzd
+
+[Service]
+ExecStart=/etc/init.d/funzd start
+ExecStop=/etc/init.d/funzd stop
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,125 @@
+#!/bin/bash
+#
+# FunzD         Start up the Funz daemon
+#
+# chkconfig: 2345 55 25
+# description: FunzD service allows to launch calculation with the Funz client
+#
+# processname: FunzD
+### BEGIN INIT INFO
+# Provides:          funzd
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Funz Daemons
+# Description:       FunzD service allows to launch calculation with the Funz client
+#
+### END INIT INFO
+### Configuration section ###
+#
+# The following variables can be edited to match your Funz installation
+#
+# Account in which the calculators are run
+USER=funz
+#
+### End of configuration section ###
+# Daemon name
+NAME=Funz
+# Computer's name
+HOSTNAME=`hostname`
+# User home directory (single quotes are MANDATORY)
+HOMEDIR=$(su $USER -c 'echo $HOME')
+# Daemon directory
+DIRECTORY="/opt/Funz"
+# Scripts
+EXEC="$DIRECTORY/FunzDaemon.sh"
+# Directory where the PID files and the log files are contained
+LOG_DIR="/tmp/FunzD"
+if [[ ! -d "$LOG_DIR" ]]
+then
+    su $USER -c "mkdir '$LOG_DIR'"
+fi
+# Lock file
+LOCK_DIR=/var/lock/subsys
+LOCK_FILE=$LOCK_DIR/$NAME.lock
+[[ ! -d "$LOCK_DIR" ]] && mkdir $LOCK_DIR
+# init-functions loading
+RHEL_FUCNTIONS_PATH=/etc/rc.d/init.d/functions
+[[ -e $RHEL_FUCNTIONS_PATH ]] && source $RHEL_FUCNTIONS_PATH
+DEBIAN_FUCNTIONS_PATH=/lib/lsb/init-functions
+[[ -e $DEBIAN_FUCNTIONS_PATH ]] && source $DEBIAN_FUCNTIONS_PATH
+# Check root profile
+check_root() {
+    if [[ $UID -ne 0 ]]
+    then
+        echo "You have to be root"
+        exit 1
+    fi
+}
+# How to use the script
+usage() {
+    echo "Usage: $0 [start|stop|status|restart]"
+    exit 1
+}
+# Start daemon
+start() {
+    echo -n "Starting $NAME:"
+    if [[ -e $RHEL_FUCNTIONS_PATH ]]
+    then
+        daemon --user=$USER $EXEC
+    elif [[ -x /sbin/start-stop-daemon ]]
+    then
+        start-stop-daemon --start --chuid $USER --exec $EXEC
+    fi
+    echo
+    touch $LOCK_FILE
+}
+# Stop daemon
+stop() {
+    echo -n "Shutting down $NAME:"
+    
+    for PID_FILE in `ls $LOG_DIR/funzd.$HOSTNAME.*.pid 2>/dev/null`
+    do  
+        killproc -p $PID_FILE $NAME
+        rm -f $PID_FILE
+    done
+    
+    echo
+    rm -f $LOCK_FILE
+}
+# Service's status
+check_status() {
+    for PID_FILE in `ls $LOG_DIR/funzd.$HOSTNAME.*.pid 2>/dev/null`
+    do
+        if [[ -e $RHEL_FUCNTIONS_PATH ]]
+        then    
+            status -p $PID_FILE -l $LOCK_FILE $NAME
+        else
+            status_of_proc -p $PID_FILE $(basename $0) $NAME
+        fi
+    done
+}
+# Browsing options
+case "$1" in
+    start)
+        check_root
+        start
+        ;;
+    stop)
+        check_root
+        stop
+        ;;
+    status)
+        check_status
+        ;;
+    restart)
+        check_root
+        stop
+        start
+        ;;
+    *)
+        usage
+esac
+exit $?
+

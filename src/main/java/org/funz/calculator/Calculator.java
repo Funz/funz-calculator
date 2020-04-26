@@ -504,20 +504,30 @@ public class Calculator implements Protocol {
         if (_sessions != null) {
             ListIterator<Session> iter = _sessions.listIterator();
             while (iter.hasNext()) {
-                iter.next().askToStop(false, why);
+                try {
+                    iter.next().askToStop(false, why);
+                } catch (ConcurrentModificationException e) {
+                    //do nothing
+                }
             }
         }
     }
 
     public void removeSession(Session s) {
-        synchronized (_sessions) {
-            _sessions.remove(s);
+        if (_sessions != null) {
+            ListIterator<Session> iter = _sessions.listIterator();
+            while (iter.hasNext()) {
+                if (iter.next().equals(s)) {
+                    iter.remove();
+                }
+            }
         }
     }
 
     void addSession(Session s) {
-        synchronized (_sessions) {
-            _sessions.add(s);
+        if (_sessions != null) {
+            ListIterator<Session> iter = _sessions.listIterator();
+            iter.add(s);
         }
     }
 

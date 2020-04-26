@@ -500,11 +500,15 @@ public class Calculator implements Protocol {
     }
 
     void destroySessions(String why) {
-        for (Iterator<Session> i = _sessions.iterator(); i.hasNext();) {
-            try{
-                i.next().askToStop(false, why);
-            }catch(ConcurrentModificationException e){
-                // just skip...
+        if (_sessions != null) {
+            for (Session i : _sessions) {
+                try {
+                    if (i != null) {
+                        i.askToStop(false, why);
+                    }
+                } catch (Exception e) {
+                    // just skip...
+                }
             }
         }
     }
@@ -623,7 +627,9 @@ public class Calculator implements Protocol {
             _codes[i] = new Code((Element) codes.item(i));
             if (_codes[i].pluginURL != null && _codes[i].pluginURL.length() > 0) {
                 try {
-                    CalculatorPlugin cp = (CalculatorPlugin) URLMethods.scanURLJar(_codes[i].pluginURL, "org.funz.calculator.plugin.CalculatorPlugin");
+                    Object p = URLMethods.scanURLJar(_codes[i].pluginURL, "org.funz.calculator.plugin.CalculatorPlugin");
+                    if (p == null) throw new Exception("Cannot instanciate CalculatorPlugin from "+_codes[i].pluginURL);
+                    CalculatorPlugin cp = (CalculatorPlugin) p;
                     log("+ found plugin " + _codes[i].pluginURL + " (class " + cp.getClass().getName() + ")");
                     _plugins.put(_codes[i].pluginURL, cp);
                 } catch (Exception ee) {

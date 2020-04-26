@@ -500,11 +500,15 @@ public class Calculator implements Protocol {
     }
 
     void destroySessions(String why) {
-        for (Iterator<Session> i = _sessions.iterator(); i.hasNext();) {
-            try{
-                i.next().askToStop(false, why);
-            }catch(ConcurrentModificationException e){
-                // just skip...
+        if (_sessions != null) {
+            for (Session i : _sessions) {
+                try {
+                    if (i != null) {
+                        i.askToStop(false, why);
+                    }
+                } catch (Exception e) {
+                    // just skip...
+                }
             }
         }
     }

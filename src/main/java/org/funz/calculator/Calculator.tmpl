@@ -41,6 +41,7 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.Locale;
 import org.apache.commons.exec.OS;
 import org.hyperic.sigar.CpuPerc;
@@ -502,16 +503,9 @@ public class Calculator implements Protocol {
 
     void destroySessions(String why) {
         if (_sessions != null) {
-            for (Session i : _sessions) {
-                try {
-                    if (i != null) {
-                        i.askToStop(false, why);
-                    }
-                } catch (ConcurrentModificationException e) {
-                    // just skip...
-                } catch (Exception e) {
-                    // just skip...
-                }
+            ListIterator<Session> iter = _sessions.listIterator();
+            while (iter.hasNext()) {
+                iter.next().askToStop(false, why);
             }
         }
     }

@@ -506,6 +506,8 @@ public class Calculator implements Protocol {
                     if (i != null) {
                         i.askToStop(false, why);
                     }
+                } catch (ConcurrentModificationException e) {
+                    // just skip...
                 } catch (Exception e) {
                     // just skip...
                 }

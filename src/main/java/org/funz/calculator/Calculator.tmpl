@@ -502,16 +502,9 @@ public class Calculator implements Protocol {
 
     void destroySessions(String why) {
         if (_sessions != null) {
-            for (Session i : _sessions) {
-                try {
-                    if (i != null) {
-                        i.askToStop(false, why);
-                    }
-                } catch (ConcurrentModificationException e) {
-                    // just skip...
-                } catch (Exception e) {
-                    // just skip...
-                }
+            ListIterator<Session> iter = _sessions.listIterator();
+            while (iter.hasNext()) {
+                iter.next().askToStop(false, why);
             }
         }
     }

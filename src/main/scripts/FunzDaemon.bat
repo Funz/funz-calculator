@@ -38,8 +38,8 @@ for /F %%a in ('dir /B "%BASEDIR%slf4j-*.jar"') do (
 set LIB=!LIB!"
 
 SET CALCULATOR=file:calculator.xml
-hostname > C:\hostname.txt
-FOR /F %%i in (C:\hostname.txt) do set HOSTN=%%i
+hostname > %TEMP%\hostname.txt
+FOR /F %%i in (%TEMP%\hostname.txt) do set HOSTN=%%i
 IF EXIST calculator-%HOSTN%.xml (SET CALCULATOR=file:calculator-%HOSTN%.xml)
 
 start java -Dapp.home=. -classpath %LIB% %MAIN% %CALCULATOR%

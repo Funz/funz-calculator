@@ -53,21 +53,21 @@ matrix:
       env:
         - JDK="openjdk@1.13"
         - TRAVIS_DIST_NAME="osx10"
-    - name: "Windows JDK8"
-      os: windows
-      env:
-        - JDK="1.8"
-        - TRAVIS_DIST_NAME="win"
-    - name: "Windows JDK11"
-      os: windows
-      env:
-        - JDK="openjdk@1.11"
-        - TRAVIS_DIST_NAME="win"
-    - name: "Windows JDK13"
-      os: windows
-      env:
-        - JDK="openjdk@1.13"
-        - TRAVIS_DIST_NAME="win"
+    #- name: "Windows JDK8"
+    #  os: windows
+    #  env:
+    #    - JDK="1.8"
+    #    - TRAVIS_DIST_NAME="win"
+    #- name: "Windows JDK11"
+    #  os: windows
+    #  env:
+    #    - JDK="openjdk@1.11"
+    #    - TRAVIS_DIST_NAME="win"
+    #- name: "Windows JDK13"
+    #  os: windows
+    #  env:
+    #    - JDK="openjdk@1.13"
+    #    - TRAVIS_DIST_NAME="win"
 env:
   global:
     # Convenience variables for shortening commands

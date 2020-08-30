@@ -80,7 +80,7 @@ before_install:
   - source $GRAVIS/install-jdk
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait brew update; brew install ant; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install ant -y; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install ant -y; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install ant -y --ignore-dependencies; fi
 
 install:
   - WD=$PWD

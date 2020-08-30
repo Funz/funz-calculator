@@ -56,7 +56,7 @@ matrix:
     - name: "Windows JDK8"
       os: windows
       env:
-        - JDK="1.8
+        - JDK="1.8"
         - TRAVIS_DIST_NAME="win"
     - name: "Windows JDK11"
       os: windows
@@ -99,13 +99,13 @@ install:
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rm -f '/usr/local/include/c++'; brew install r; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then RH=`ls /usr/local/Cellar/r/`; echo `ls /usr/local/Cellar/r/$RH/bin`; export PATH=$PATH:/usr/local/Cellar/r/$RH/bin; fi
-  - if [[ "$TRAVIS_OSX_IMAGE" == "xcode9.3" ]]; then brew uninstall --ignore-dependencies --force python; brew install python3; fi # to get python3 instead of 2 -> ok.py test working
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9; fi
   - if [[ "$TRAVIS_DIST_NAME" == "trusty" ]]; then echo "deb https://cloud.r-project.org/bin/linux/ubuntu trusty-cran35/" | sudo tee -a /etc/apt/sources.list; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install r-recommended --allow-unauthenticated -y; fi
+  - if [[ "$TRAVIS_OSX_IMAGE" == "xcode9.3" ]]; then brew uninstall --ignore-dependencies --force python; brew install python3; fi # to get python3 instead of 2 -> ok.py test working
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export HOMEBREW_NO_AUTO_UPDATE=1; rm -f '/usr/local/include/c++'; brew install r; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install r -y; fi
-
 script: 
   - ant test
 

@@ -1,42 +1,86 @@
-language: java
+#language: java
+language: minimal
+cache:
+  directories:
+    - $HOME/.jabba/
 matrix:
   include:
     - name: "Linux JDK8"
       os: linux
       dist: trusty
-      jdk:
-        - openjdk8
+      #jdk:
+      #  - openjdk8
       env:
+        - JDK="adopt@1.8"
         - TRAVIS_DIST_NAME="trusty"
-    - name: "Linux JDK latest"
+    - name: "Linux JDK11"
       os: linux
       dist: xenial
-      jdk:
-        - oraclejdk13
+      #jdk:
+      #  - openjdk11
       env:
+        - JDK="openjdk@1.11"
         - TRAVIS_DIST_NAME="xenial"
-        - global: JAVA_OPTS=-"-Xmx6G -Xss1G"
-        - global: ANT_OPTS="-Xmx6G -Xss1G"
+    - name: "Linux JDK13"
+      os: linux
+      dist: xenial
+      #jdk:
+      #  - openjdk13
+      env:
+        - JDK="openjdk@1.13"
+        - TRAVIS_DIST_NAME="xenial"
     - name: "MacOS JDK8"
       os: osx
       osx_image: xcode9.3
-    - name: "MacOS JDK latest"
+      #jdk:
+      #  - openjdk8
+      env:
+        - JDK="adopt@1.8"
+        - TRAVIS_DIST_NAME="osx9"
+    - name: "MacOS JDK11"
       os: osx
       osx_image: xcode10.1
-      jdk:
-        - oraclejdk13
+      #jdk:
+      #  - openjdk11
       env:
-        - global: JAVA_OPTS=-"-Xmx6G -Xss1G"
-        - global: ANT_OPTS="-Xmx6G -Xss1G"
-#    - name: "Windows" -- Not yet working
-#      os: windows
-#      jdk:
-#        - oraclejdk8
-#        - oraclejdk13
-
+        - JDK="openjdk@1.11"
+        - TRAVIS_DIST_NAME="osx10"
+    - name: "MacOS JDK13"
+      os: osx
+      osx_image: xcode10.1
+      #jdk:
+      #  - openjdk13
+      env:
+        - JDK="openjdk@1.13"
+        - TRAVIS_DIST_NAME="osx10"
+    - name: "Windows JDK8"
+      os: windows
+      env:
+        - JDK="1.8
+        - TRAVIS_DIST_NAME="win"
+    - name: "Windows JDK11"
+      os: windows
+      env:
+        - JDK="openjdk@1.11"
+        - TRAVIS_DIST_NAME="win"
+    - name: "Windows JDK13"
+      os: windows
+      env:
+        - JDK="openjdk@1.13"
+        - TRAVIS_DIST_NAME="win"
+env:
+  global:
+    # Convenience variables for shortening commands
+    - GRAVIS_REPO="https://github.com/DanySK/Gravis-CI.git"
+    - GRAVIS="$HOME/gravis"
+    
 before_install:
+  # Check out the script set
+  - travis_retry git clone --depth 1 $GRAVIS_REPO $GRAVIS
+  - source $GRAVIS/install-jdk
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait brew update; brew install ant; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install ant -y; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install ant -y; fi
 
 install:
   - WD=$PWD
@@ -60,6 +104,7 @@ before_script:
   - if [[ "$TRAVIS_DIST_NAME" == "trusty" ]]; then echo "deb https://cloud.r-project.org/bin/linux/ubuntu trusty-cran35/" | sudo tee -a /etc/apt/sources.list; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install r-recommended --allow-unauthenticated -y; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install r -y; fi
 
 script: 
   - ant test

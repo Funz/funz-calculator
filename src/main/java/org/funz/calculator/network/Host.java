@@ -68,7 +68,7 @@ public class Host {
     volatile boolean rebuildPacket = true;
 
     @Override
-    protected void finalize() throws Throwable {
+    public void finalize() throws Throwable {
         if (socket!=null) 
             socket.close();
     

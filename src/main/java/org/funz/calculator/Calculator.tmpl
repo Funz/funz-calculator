@@ -506,7 +506,9 @@ public class Calculator implements Protocol {
             ListIterator<Session> iter = _sessions.listIterator();
             while (iter.hasNext()) {
                 try {
-                    iter.next().askToStop(false, why);
+                    Session next = iter.next();
+                    if (next!=null)
+                        next.askToStop(false, why);
                 } catch (ConcurrentModificationException e) {
                     //do nothing
                 }

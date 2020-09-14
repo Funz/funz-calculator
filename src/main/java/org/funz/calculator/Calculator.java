@@ -247,7 +247,8 @@ public class Calculator implements Protocol {
                 System.err.println("usage: calculator configfile");
                 System.exit(1);
             }
-
+            
+            LogTicToc.T(); // Ensure LogTicToc static vars are initialized...
             final Calculator calc = new Calculator(args[0], new LogConsole(), 
                     new LogFile(new File(System.getProperty("java.io.tmpdir"), "calculator." + LogTicToc.T() + ".log")));
             calc.runloop();
@@ -505,7 +506,9 @@ public class Calculator implements Protocol {
             ListIterator<Session> iter = _sessions.listIterator();
             while (iter.hasNext()) {
                 try {
-                    iter.next().askToStop(false, why);
+                    Session next = iter.next();
+                    if (next!=null)
+                        next.askToStop(false, why);
                 } catch (ConcurrentModificationException e) {
                     //do nothing
                 }

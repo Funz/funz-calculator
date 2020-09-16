@@ -25,7 +25,11 @@ public class DefaultCodeLauncher extends CodeLauncher {
 
     public DefaultCodeLauncher(DefaultCalculatorPlugin plugin) {
         _plugin = plugin;
-        tunnel = new FTPCalculatorTunnel(_plugin._secured);
+        try{
+            tunnel = new FTPCalculatorTunnel(_plugin._secured);
+        }catch(Error e){
+            System.err.println("Could no load FTP CalculatorTunnel");
+        }
         _plugin.setDataChannel(new CalculatorTunnel.DataChannelTunnel(_plugin.getDataChannel(), tunnel));
         shutdown = new Thread(new Runnable() {
             public void run() {

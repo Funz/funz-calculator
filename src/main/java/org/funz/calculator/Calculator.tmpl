@@ -485,6 +485,16 @@ public class Calculator implements Protocol {
             }
             _serversocket = null;
 
+            // Close all hosts sockets
+            try {
+                for(Host host :this._hosts){
+                    host.finalize();
+                }
+            } catch (Throwable ex) {
+                log("!  Impossible to close Host socket:\n" + ex.getMessage());
+
+            }
+
             try {
                 loadConf(_conf);
                 md5conf = newmd5;

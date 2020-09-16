@@ -573,6 +573,8 @@ public class Session extends Thread implements DataChannel {
         }
         _request.clear();
 
+        log("readRequest ... 0");
+
         if (_reader == null) {
             log("readRequest ... _reader == null");
             throw new Exception("reader destroyed");
@@ -583,7 +585,7 @@ public class Session extends Thread implements DataChannel {
         try {
             while (!_askedToStop && _reader != null && !_reader.ready()) {
                 Thread.sleep(100);
-                if (sleep++ > 100) {
+                if (sleep++ > 1000) {
                     log("readRequest ... ready waited too long.");
                     throw new IOException("ready waited too long");
                 }
@@ -612,6 +614,7 @@ public class Session extends Thread implements DataChannel {
 
         if (_request.size() == 0) {
             log("readRequest ... request.size() == 0");
+            System.err.print("0");
             //calculator.out.println("  REQ> NULL");
             throw new IOException("no stream");
             //_request.add("no stream");

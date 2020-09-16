@@ -84,10 +84,7 @@ public class Session extends Thread implements DataChannel {
     }
 
     public void log(String message) {
-        //System.err.println("[Calc] " + _host + ":" + calculator._port + "-" + hashCode() + " : " + message);
-        //System.err.println("[NetworkClient] " + this + ": " + message);
-        //this.calculator.out("(" + hashCode() + ") " + message);
-        //System.err.println("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: (" + _sock + ") "+message);
+        //System.err.println("                         >>>>>>>>>>>>>>>>>>>>>>>>> " + message);
     }
 
     public void out(String message) {
@@ -99,10 +96,10 @@ public class Session extends Thread implements DataChannel {
         log("[ERROR] " + message);
         this.calculator.err("!" + hashCode() + "! " + message);
     }
- 
+
     public Session(Calculator calculator, Socket sock) throws IOException {
         super(calculator._name + ":" + calculator._port + " " + sock.toString());
-        
+
         _sock = sock;
         this.calculator = calculator;
 
@@ -162,7 +159,7 @@ public class Session extends Thread implements DataChannel {
     }
 
     public void askToStop(boolean sync, String why) {
-        out("askToStop ... " + this+" because "+why);
+        out("askToStop ... " + this + " because " + why);
         if (_askedToStop) {
             out("          ...askToStop already called.");
             return;
@@ -194,16 +191,17 @@ public class Session extends Thread implements DataChannel {
         } catch (IOException ex) {
             err(ex.getLocalizedMessage());
         }
-        
-        if (sync) { 
-            sessionTimeoutStop(true,"sync askToStop");
+
+        if (sync) {
+            sessionTimeoutStop(true, "sync askToStop");
             try {
                 join();
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
-        } else            
-            sessionTimeoutStop(false,"askToStop");
+        } else {
+            sessionTimeoutStop(false, "askToStop");
+        }
 
         synchronized (this.calculator) {
             this.calculator.removeSession(this);
@@ -263,35 +261,23 @@ public class Session extends Thread implements DataChannel {
 
             } catch (IOException ioe) {
                 err("zip failed:" + ioe.getMessage());
-                ioe.printStackTrace();
-                _writer.println(Calculator.RET_NO);
-                _writer.println("zip failed:" + ioe.getMessage());
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
+                returnNO("zip failed:" + ioe.getMessage());
             }
-            _writer.println(Calculator.RET_YES);
-            _writer.println(Calculator.END_OF_REQ);
+            returnYES();
         } catch (IOException ioe) {
             err("archiving failed:" + ioe.getMessage());
-            ioe.printStackTrace();
             try {
-                _writer.println(Calculator.RET_NO);
-                _writer.println("archiving failed:" + ioe.getMessage());
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
+                returnNO("archiving failed:" + ioe.getMessage());
             } catch (IOException ioe2) {
-                ioe2.printStackTrace();
             }
         } finally {
             try {
                 out.close();
                 out = null;
             } catch (Exception ee) {
-                ee.printStackTrace();
             }
         }
 
-        _writer.flush();
         out("archiving over");
         out("                  ... archiveResults done.");
     }
@@ -311,20 +297,15 @@ public class Session extends Thread implements DataChannel {
 
             if (!this.calculator.isAvailable()) {
                 err("Not available. Exec failed for " + _request.get(1));
-                _writer.println(Calculator.RET_NO);
-                _writer.println(Calculator.UNAVAILABLE_STATE);
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
+                returnNO("Not available. Exec failed for " + _request.get(1));
                 //this.calculator._reserver = null;
-                askToStop(true,"Not available. Exec failed for " + _request.get(1));
+                askToStop(true, "Not available. Exec failed for " + _request.get(1));
                 return;
             }
 
             String codeName = (String) _request.get(1);
             this.calculator.log("executing " + codeName);
-            _writer.println(Calculator.RET_YES);
-            _writer.println(Calculator.END_OF_REQ);
-            _writer.flush();
+            returnYES();
             setActivity("running " + codeName, "execute");
 
             String command = "command_not_set:" + codeName;
@@ -339,21 +320,13 @@ public class Session extends Thread implements DataChannel {
                 this.calculator._launcher = _plugin.createCodeLauncher(this.calculator._vars, this);
             } catch (Exception e) { // in case something goes wrong on server side, release client so it will retry another server...
                 err("Exception for " + _request.get(1) + ": " + e.getMessage());
-                e.printStackTrace();
-                _writer.println(Calculator.RET_NO);
-                _writer.println("exception");
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
-                askToStop(true,"Exception for " + _request.get(1) + ": " + e.getMessage());
+                returnNO("Exception for " + _request.get(1) + ": " + e.getMessage());
+                askToStop(true, "Exception for " + _request.get(1) + ": " + e.getMessage());
                 return;
             } catch (Error e) { // in case something goes wrong on server side, release client so it will retry another server...
                 err("Error for " + _request.get(1) + ": " + e.getMessage());
-                e.printStackTrace();
-                _writer.println(Calculator.RET_NO);
-                _writer.println("error");
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
-                askToStop(true,"Error for " + _request.get(1) + ": " + e.getMessage());
+                returnNO("Error: " + e.getMessage());
+                askToStop(true, "Error for " + _request.get(1) + ": " + e.getMessage());
                 return;
             }
 
@@ -364,7 +337,7 @@ public class Session extends Thread implements DataChannel {
                 public void run() {
                     while (Session.this.calculator._launcher == Session.this.calculator._lastLauncher) {
                         try {
-                            sleep(1000L);
+                            sleep(100L);
                         } catch (Exception e) {
                         }
                         synchronized (Session.this.calculator._launcherLock) {
@@ -372,15 +345,16 @@ public class Session extends Thread implements DataChannel {
                                 return;
                             }
                             try {
-                                if (_writer!=null){
-                                _writer.println(Calculator.RET_HEARTBEAT);
-                                _writer.flush();}
+                                if (_writer != null) {
+                                    _writer.println(Calculator.RET_HEARTBEAT);
+                                    _writer.flush();
+                                }
                             } catch (IOException e) {
                                 Session.this.err("killing after connection lost: " + e);
                                 if (Session.this.calculator._launcher.isAlive()) {
                                     Session.this.calculator._launcher.stopRunning();
                                 }
-                                askToStop(false,"killing after connection lost: " + e);
+                                askToStop(false, "killing after connection lost: " + e);
                                 return;
                             }
                         }
@@ -398,31 +372,23 @@ public class Session extends Thread implements DataChannel {
             watcher = null;
 
             if (this.calculator._lastLauncher.failed() && !_killed) {
-                _writer.println(Calculator.RET_NO);
-                if(this.calculator._lastLauncher.getReason() == null) {
-                    _writer.println("reason ?");
-                    _writer.println(Calculator.END_OF_REQ);
-                    _writer.flush();
+                if (this.calculator._lastLauncher.getReason() == null) {
+                    returnNO("run failed: null");
                     err("run failed: null");
                 } else {
-                    _writer.println("reason: " + this.calculator._lastLauncher.getReason().replace("\n", ""));
-                    _writer.println(Calculator.END_OF_REQ);
-                    _writer.flush();
+                    returnNO("run failed: " + this.calculator._lastLauncher.getReason());
                     err("run failed: " + this.calculator._lastLauncher.getReason());
                 }
-
 
                 /*synchronized (this.calculator._lock) {
                  this.calculator._reserver = null;
                  }*/
                 setActivity(this.calculator.isAvailable() ? Calculator.IDLE_STATE : Calculator.UNAVAILABLE_STATE, "launcher failed");
-                //_askedToStop = true;
+                //_askedToStop = true; NO! this might have just failed for one code, and not for others...
                 //return;
             } else {
                 if (!_killed) {
-                    _writer.println(Calculator.RET_YES);
-                    _writer.println(Calculator.END_OF_REQ);
-                    _writer.flush();
+                    returnYES();
                     setActivity(this.calculator.isAvailable() ? Calculator.ALREADY_RESERVED + " by " + this.calculator._reserver : Calculator.UNAVAILABLE_STATE, "launcher succeded");
                     out("done!");
                 }
@@ -445,9 +411,7 @@ public class Session extends Thread implements DataChannel {
 
     private void getInfo() throws IOException {
         out("getInfo ...");
-        _writer.println(Calculator.RET_YES);
-        _writer.println(Calculator.END_OF_REQ);
-        _writer.flush();
+        returnYES();
 
         _writer.println(System.getProperty("user.name"));
         _writer.println(this.calculator._spool);
@@ -493,9 +457,7 @@ public class Session extends Thread implements DataChannel {
 
     private void getActivity() throws IOException {
         out("getActivity ...");
-        _writer.println(Calculator.RET_YES);
-        _writer.println(Calculator.END_OF_REQ);
-        _writer.flush();
+        returnYES();
 
         _writer.println(this.calculator.getActivity());
         _writer.flush();
@@ -520,9 +482,7 @@ public class Session extends Thread implements DataChannel {
                     notOwner("killRunningCode");
                 }
             }
-            _writer.println(Calculator.RET_YES);
-            _writer.println(Calculator.END_OF_REQ);
-            _writer.flush();
+            returnYES();
             out("   killed.");
         } else {
             err("   kill failed: reserver=" + this.calculator._reserver + " secret code=" + this.calculator._secretCode);
@@ -534,9 +494,13 @@ public class Session extends Thread implements DataChannel {
 
     private void newCase() throws Exception {
         out("newCase ...");
+        if (this.calculator._reserver != this) {
+            notOwner("newCase");
+            return;
+        }
+
         this.calculator._vars = new Properties();
         int nvars = Integer.parseInt(_reader.readLine());
-
         for (int _i = 0; _i < nvars; _i++) {
             String key = _reader.readLine();
             String value = _reader.readLine();
@@ -545,46 +509,21 @@ public class Session extends Thread implements DataChannel {
         }
         log("         " + this.calculator._vars);
 
-        if (this.calculator._reserver != this) {
-            notOwner("newCase");
-            return;
-        }
-
         if (this.calculator._dir == null) {
             this.calculator._dir = new File(this.calculator._spool + File.separator + this.calculator._name + File.separator + this.calculator._port + File.separator + "spool");
         }
-
+        if (this.calculator._dir.isDirectory() || this.calculator._dir.mkdirs()) {
+            returnYES();
+        } else {
+            throw new IOException("could not create directory " + this.calculator._dir);
+        }
         _files = new LinkedList();
-
-        if (!this.calculator._dir.isDirectory() && !this.calculator._dir.mkdirs()) {
-            _writer.println(Calculator.RET_NO);
-            _writer.println("could not create directory " + this.calculator._dir);
-            _writer.println(Calculator.END_OF_REQ);
-            _writer.flush();
-            return;
-        }
-
-        try {
-            Disk.setWritable(this.calculator._dir, true);
-            Disk.emptyDir(this.calculator._dir);
-        } catch (IOException e) {
-            int i = 1;
-            init_dir_name = this.calculator._dir.getName();
-            while (this.calculator._dir.exists()) {
-                this.calculator._dir = new File(this.calculator._dir.getParentFile(), init_dir_name + "." + (i++));
-            }
-        }
-
-        _writer.println(Calculator.RET_YES);
-        _writer.println(Calculator.END_OF_REQ);
-        _writer.flush();
 
         out("        ... newCase done.");
     }
 
     private void notOwner(String from) throws Exception {
         out("notOwner " + from + " ...");
-        _writer.println(Calculator.RET_NO);
         String msg = "";
         if (this.calculator == null) {
             msg = "null calculator";
@@ -593,9 +532,7 @@ public class Session extends Thread implements DataChannel {
         } else {
             msg = this.calculator._reserver.getName() + "!=" + this.getName();
         }
-        _writer.println("not owner (" + from + "): " + msg);
-        _writer.println(Calculator.END_OF_REQ);
-        _writer.flush();
+        returnNO("not owner (" + from + "): " + msg);
         out("         ... notOwner done.");
     }
 
@@ -604,10 +541,8 @@ public class Session extends Thread implements DataChannel {
         if (this.calculator._reserver != this) {
             notOwner("putFile");
             return;
-        }
-        _writer.println(Calculator.RET_YES);
-        _writer.println(Calculator.END_OF_REQ);
-        _writer.flush();
+        }      
+        returnYES();
 
         String name = ((String) _request.get(1));
         long size = Long.parseLong((String) _request.get(2));
@@ -617,6 +552,7 @@ public class Session extends Thread implements DataChannel {
         if (!f.getParentFile().exists() && !f.getParentFile().mkdirs()) {
             throw new IOException("Could not create directory " + f.getParentFile().getAbsolutePath());
         }
+                
         if (!this.calculator._isSecure) {
             Disk.deserializeFile(_dis, f.getPath(), size, null);
         } else {
@@ -625,13 +561,11 @@ public class Session extends Thread implements DataChannel {
 
         _files.add(f);
 
-        _writer.println(Calculator.RET_YES);
-        _writer.println(Calculator.END_OF_REQ);
-        _writer.flush();
+        returnYES();
         out("         ... putFile done.");
     }
 
-    private /*synchronized*/ void readRequest() throws Exception {
+    private synchronized void readRequest() throws Exception {
         out("readRequest ...");
         //calculator.out.println("REQ ?");
         if (_request == null) {
@@ -709,19 +643,14 @@ public class Session extends Thread implements DataChannel {
             log("reserve: SYNC !");
             if (!this.calculator.isAvailable()) {
                 err("calculator not available. (reserver=" + this.calculator._reserver + ")");
-                _writer.println(Calculator.RET_NO);
-                _writer.println(Calculator.UNAVAILABLE_STATE);
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
-                askToStop(false,"calculator not available. (reserver=" + this.calculator._reserver + ")");
+                returnNO(Calculator.UNAVAILABLE_STATE);
+                askToStop(false, "calculator not available. (reserver=" + this.calculator._reserver + ")");
                 return;
             }
 
             if (this.calculator._reserver == null) {
                 log("reserve: _reserver == null");
-                _writer.println(Calculator.RET_YES);
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
+                returnYES();
 
                 log("reserve:_reserver = this");
                 this.calculator._reserver = this;
@@ -756,7 +685,6 @@ public class Session extends Thread implements DataChannel {
                         try {
                             force_unreserve();
                         } catch (Exception ex) {
-                            ex.printStackTrace();
                         }
                         log("reservetimeout.run END");
                     }
@@ -796,12 +724,8 @@ public class Session extends Thread implements DataChannel {
                     _plugin.prepareNewProject(_tvalues);
                 } catch (Exception e) {
                     err("Plugin " + _plugin.getClass().getName() + " throwed exception " + e.toString());
-                    e.printStackTrace();
-                    _writer.println(Calculator.RET_NO);
-                    _writer.println("plugin exception " + e.toString());
-                    _writer.println(Calculator.END_OF_REQ);
-                    _writer.flush();
-                    askToStop(false,"Plugin " + _plugin.getClass().getName() + " throwed exception " + e.toString());
+                    returnNO("plugin exception " + e.getMessage());
+                    askToStop(false, "Plugin " + _plugin.getClass().getName() + " throwed exception " + e.toString());
                     return;
                 }
 
@@ -831,14 +755,24 @@ public class Session extends Thread implements DataChannel {
 
             } else {
                 err("reserve failed, already reserved by: " + this.calculator._reserver);
-                _writer.println(Calculator.RET_NO);
-                _writer.println(Calculator.ALREADY_RESERVED);
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
-                askToStop(false,"reserve failed, already reserved by: " + this.calculator._reserver);
+                returnNO(Calculator.ALREADY_RESERVED);
+                askToStop(false, "reserve failed, already reserved by: " + this.calculator._reserver);
             }
         }
         out("          ... reserve done.");
+    }
+
+    private void returnYES() throws IOException {
+        _writer.println(Calculator.RET_YES);
+        _writer.println(Calculator.END_OF_REQ);
+        _writer.flush();
+    }
+
+    void returnNO(String why) throws IOException {
+        _writer.println(Calculator.RET_NO);
+        _writer.println(why);
+        _writer.println(Calculator.END_OF_REQ);
+        _writer.flush();
     }
 
     @Override
@@ -857,7 +791,7 @@ public class Session extends Thread implements DataChannel {
                         sessionTimeoutStart(Calculator.METHOD_RESERVE);
                         reserve();
                     } else if (_method.equals(Calculator.METHOD_UNRESERVE)) {
-                        sessionTimeoutStop(true,Calculator.METHOD_UNRESERVE); // no need here sessionTimeoutStart();
+                        sessionTimeoutStop(true, Calculator.METHOD_UNRESERVE); // no need here sessionTimeoutStart();
                         unreserve();
                     } else if (_method.equals(Calculator.METHOD_NEW_CASE)) {
                         sessionTimeoutStart(Calculator.METHOD_NEW_CASE);
@@ -872,7 +806,7 @@ public class Session extends Thread implements DataChannel {
                         sessionTimeoutStart(Calculator.METHOD_GET_ARCH);
                         transferArchive();
                     } else if (_method.equals(Calculator.METHOD_EXECUTE)) {
-                        sessionTimeoutStop(true,Calculator.METHOD_EXECUTE); // _NO_ sessionTimeoutStart here, beccause we don't know how long it will take...
+                        sessionTimeoutStop(true, Calculator.METHOD_EXECUTE); // _NO_ sessionTimeoutStart here, beccause we don't know how long it will take...
                         execute();
                         sessionTimeoutStart(Calculator.METHOD_EXECUTE); // To unplug if connection was lost during run
                     } else if (_method.equals(Calculator.METHOD_KILL)) {
@@ -890,8 +824,9 @@ public class Session extends Thread implements DataChannel {
                     }
 
                 } catch (IOException e) {
-                    log(" run.readRequest IOException "+e);
-                    //e.printStackTrace();
+                    out("IOException: " + e.getMessage());
+                    log(" run.readRequest IOException " + e);
+                    returnNO("IOException:" + e.getMessage());
                     force_unreserve();
                 }
                 log(" run.readRequest Processed");
@@ -905,7 +840,7 @@ public class Session extends Thread implements DataChannel {
                 }
             }
 
-            log(" run.closing socket "+_sock);
+            log(" run.closing socket " + _sock);
             try {
                 if (_sock != null && !_sock.isClosed()) {
                     _sock.shutdownInput();
@@ -914,12 +849,10 @@ public class Session extends Thread implements DataChannel {
                 }
             } catch (Exception ex) {
                 err("Failed to close server & socket: " + ex.getMessage());
-                //ex.printStackTrace();
             }
             log(" run.NO Exception");
         } catch (Exception e) {
             err(" run.Exception " + e);
-            //e.printStackTrace();
 
             //System.err.println("SYNC ? " + this.calculator._lock);
             synchronized (this.calculator._lock) {
@@ -945,7 +878,6 @@ public class Session extends Thread implements DataChannel {
                 }
             } catch (Exception ex) {
                 err("Failed to shutdown socket: " + ex.getMessage());
-                //ex.printStackTrace();
             }
             log(" run.Exception END");
         }
@@ -961,11 +893,10 @@ public class Session extends Thread implements DataChannel {
     private void sessionTimeoutStop(boolean sync, String by) {
         log(".......................................................requesttimeout.STOP " + by);
         if (requesttimeout != null && requesttimeout.getState() != State.TERMINATED) {
-            log(".......................................................  requesttimeout: !=null && requesttimeout.getState() "+requesttimeout.getState());
-            synchronized (requesttimeout_lock) {
-                sessionTimeout = false;
-                log(".......................................................  requesttimeout: BREAK " + by);
-                requesttimeout_lock.notify();
+            log(".......................................................  requesttimeout: !=null && requesttimeout.getState() " + requesttimeout.getState());
+            sessionTimeout = false;
+            if (requesttimeout != null) {
+                requesttimeout.interrupt();
             }
 
             if (sync) { //most always join, otherwise sessionTimeout will return true before ending breaking previous requesttimeout thread...
@@ -988,40 +919,29 @@ public class Session extends Thread implements DataChannel {
             public void run() {
                 log(".......................................................  requesttimeout.RUN " + by);
                 try {
-                    synchronized (requesttimeout_lock) {
-                        requesttimeout_lock.notify();
-                        requesttimeout_lock.wait(REQUEST_TIMEOUT);
-                    }
-
-                    if (!sessionTimeout) {
-                        log(".......................................................  requesttimeout.BROKEN " + by);
-                        return;
-                    } else {
-                        log(".......................................................    [request TIMEOUT] by " + by + " force stop because no interaction with client in " + REQUEST_TIMEOUT / 1000 + " s.");
-                    }
-
-                    try {
-                        askToStop(false, ".......................................................    [request TIMEOUT] by "+by+" force stop because no interaction with client in "+REQUEST_TIMEOUT/1000+" s.");
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                    synchronized (requesttimeout) {
+                        requesttimeout.wait(REQUEST_TIMEOUT);
                     }
                 } catch (InterruptedException ex) {
-                    log(".......................................................  requesttimeout.INTERRUPT "+by);
+                    log(".......................................................  requesttimeout.INTERRUPT " + by);
+                }
+                if (!sessionTimeout) {
+                    log(".......................................................  requesttimeout.BROKEN " + by);
+                    return;
+                } else {
+                    log(".......................................................    [request TIMEOUT] by " + by + " force stop because no interaction with client in " + REQUEST_TIMEOUT / 1000 + " s.");
                 }
 
+                try {
+                    askToStop(false, ".......................................................    [request TIMEOUT] by " + by + " force stop because no interaction with client in " + REQUEST_TIMEOUT / 1000 + " s.");
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
-        }, "NetworkClient.requesttimeout "+(i++)+" by "+by);
-        log(".......................................................requesttimeout.START "+by);
+        }, "NetworkClient.requesttimeout " + (i++) + " by " + by);
+        log(".......................................................requesttimeout.START " + by);
         sessionTimeout = true;
         requesttimeout.start();
-
-        synchronized (requesttimeout_lock) { //ensure to nt return before is efffectively launched !
-            try {
-                requesttimeout_lock.wait();
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
-        }
     }
 
     public boolean sendFileToConsole(File file) {
@@ -1048,7 +968,6 @@ public class Session extends Thread implements DataChannel {
                 _writer.flush();
             } catch (IOException e) {
                 err(e.getLocalizedMessage());
-                e.printStackTrace();
                 lastinfo = null;
                 return false;
             }
@@ -1071,9 +990,7 @@ public class Session extends Thread implements DataChannel {
 
     private void transferArchive() throws IOException {
         out("transferArchive ...");
-        _writer.println(Calculator.RET_YES);
-        _writer.println(Calculator.END_OF_REQ);
-        _writer.flush();
+        returnYES();
         File archive = new File(this.calculator._dir.getParent() + File.separator + Calculator.ARCHIVE_FILE);
         _writer.println("" + archive.length());
         _writer.flush();
@@ -1128,9 +1045,7 @@ public class Session extends Thread implements DataChannel {
                 this.calculator._reserver = null;
                 this.calculator._secretCode = "";
                 this.calculator.log("unreserved");
-                _writer.println(Calculator.RET_YES);
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
+                returnYES();
                 setActivity(Calculator.IDLE_STATE, "unreserved");
                 //askToStop();
             } else /*if (this.calculator._reserver == null) {
@@ -1142,7 +1057,7 @@ public class Session extends Thread implements DataChannel {
         }
         out("          ... unreserve done.");
 
-        askToStop(false,"unreserve ...");
+        askToStop(false, "unreserve ...");
     }
 
     private void force_unreserve() throws Exception {
@@ -1163,13 +1078,13 @@ public class Session extends Thread implements DataChannel {
             } /*else if (this.calculator._reserver == null) {
                 setActivity(Calculator.IDLE_STATE, "force_unreserve");
             }*/ else {
-                err("force unreserve failed: "+this.calculator._reserver);
+                err("force unreserve failed: " + this.calculator._reserver);
                 //notOwner();
             }
             //askToStop();
         }
         out("               ... force_unreserve done.");
 
-        askToStop(false,"force_unreserve ...");
+        askToStop(false, "force_unreserve ...");
     }
 }

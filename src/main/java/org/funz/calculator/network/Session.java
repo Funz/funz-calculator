@@ -541,18 +541,23 @@ public class Session extends Thread implements DataChannel {
         if (this.calculator._reserver != this) {
             notOwner("putFile");
             return;
-        }      
+        }
         returnYES();
 
         String name = ((String) _request.get(1));
         long size = Long.parseLong((String) _request.get(2));
         name = name.replace('/', File.separatorChar);
         out("receiving file " + name + " (" + size + " bytes)");
-        File f = new File(this.calculator._dir + File.separator + name);
-        if (!f.getParentFile().exists() && !f.getParentFile().mkdirs()) {
+        File f = new File(this.calculator._dir, name);
+        if (!this.calculator._dir.exists() && !this.calculator._dir.mkdirs()) {
             throw new IOException("Could not create directory " + f.getParentFile().getAbsolutePath());
         }
-                
+
+        Disk.emptyDir(this.calculator._dir);
+        if (Disk.listRecursiveFiles(this.calculator._dir).length > 0) {
+            throw new IOException("Could not clean directory " + f.getParentFile().getAbsolutePath());
+        }
+
         if (!this.calculator._isSecure) {
             Disk.deserializeFile(_dis, f.getPath(), size, null);
         } else {

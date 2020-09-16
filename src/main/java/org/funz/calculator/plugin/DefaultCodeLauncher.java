@@ -28,7 +28,7 @@ public class DefaultCodeLauncher extends CodeLauncher {
         try{
             tunnel = new FTPCalculatorTunnel(_plugin._secured);
         }catch(Error e){
-            System.err.println("Could no load FTP CalculatorTunnel");
+            System.err.println("Could not instanciate FTP Calculator Tunnel");
         }
         _plugin.setDataChannel(new CalculatorTunnel.DataChannelTunnel(_plugin.getDataChannel(), tunnel));
         shutdown = new Thread(new Runnable() {

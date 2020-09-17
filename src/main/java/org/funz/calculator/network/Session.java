@@ -547,9 +547,9 @@ public class Session extends Thread implements DataChannel {
         String name = ((String) _request.get(1));
         long size = Long.parseLong((String) _request.get(2));
         name = name.replace('/', File.separatorChar);
-        out("receiving file " + name + " (" + size + " bytes)");
+        out("receiving file " + name + " (" + size + " bytes)");        
         File f = new File(this.calculator._dir, name);
-        if (!this.calculator._dir.exists() && !this.calculator._dir.mkdirs()) {
+        if (!f.getParentFile().exists() && !f.getParentFile().mkdirs()) {
             throw new IOException("Could not create directory " + f.getParentFile().getAbsolutePath());
         }
 

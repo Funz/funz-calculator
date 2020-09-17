@@ -244,7 +244,7 @@ public class NetworkTest {
 
         System.err.println("------------------------------------------------[CLIENT]>unreserve " + ui_client1.unreserve());
 
-        assert !ui_client1.isReserved() : "Client still reserved !";
+        assert !ui_client1.isReserved() : "Client still reserved: "+ui_client1.getReason();
 
         File results = new File("results.zip");
         assert results.exists();

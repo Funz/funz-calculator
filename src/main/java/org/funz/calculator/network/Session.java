@@ -544,18 +544,18 @@ public class Session extends Thread implements DataChannel {
         }
         returnYES();
 
+        Disk.emptyDir(this.calculator._dir);
+        if (Disk.listRecursiveFiles(this.calculator._dir).length > 0) {
+            throw new IOException("Could not clean directory " + this.calculator._dir);
+        }
+
         String name = ((String) _request.get(1));
         long size = Long.parseLong((String) _request.get(2));
         name = name.replace('/', File.separatorChar);
-        out("receiving file " + name + " (" + size + " bytes)");        
+        out("receiving file " + name + " (" + size + " bytes)");
         File f = new File(this.calculator._dir, name);
         if (!f.getParentFile().exists() && !f.getParentFile().mkdirs()) {
             throw new IOException("Could not create directory " + f.getParentFile().getAbsolutePath());
-        }
-
-        Disk.emptyDir(this.calculator._dir);
-        if (Disk.listRecursiveFiles(this.calculator._dir).length > 0) {
-            throw new IOException("Could not clean directory " + f.getParentFile().getAbsolutePath());
         }
 
         if (!this.calculator._isSecure) {

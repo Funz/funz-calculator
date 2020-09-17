@@ -58,8 +58,8 @@ public class NetworkTest {
         System.err.println("########################################### setUp ###########################################");
 
         Session.RESERVE_TIMEOUT = 2000;
- Session.REQUEST_TIMEOUT = 10000;
- 
+        Session.REQUEST_TIMEOUT = 10000;
+
         calculator = new Calculator("file:./dist/calculator.xml", new LogConsole(), new LogConsole());
         calculator.checkAvailability();
         sessions.clear();
@@ -151,7 +151,7 @@ public class NetworkTest {
 
         // no more remaining thread
     }
-    
+
     @Test
     public void testListeningUnplug() throws Exception, Throwable {
 
@@ -160,24 +160,24 @@ public class NetworkTest {
 
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + ui_client1.getActivity());
             Client.CalculatorInfo info1 = new Client.CalculatorInfo();
-            assert ui_client1.getInfo(info1) : "Failed getInfo at "+j;
+            assert ui_client1.getInfo(info1) : "Failed getInfo at " + j;
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + info1);
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI2: " + ui_client2.getActivity());
             Client.CalculatorInfo info2 = new Client.CalculatorInfo();
-            assert ui_client2.getInfo(info2) : "Failed getInfo at "+j;
+            assert ui_client2.getInfo(info2) : "Failed getInfo at " + j;
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI2: " + info2);
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> C1: " + calculator.getActivity());
 
         }
-        
+
         ui_client2.finalize();
-        
-         for (int j = 0; j < 20; j++) {
+
+        for (int j = 0; j < 20; j++) {
             Thread.sleep(1000);
 
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + ui_client1.getActivity());
             Client.CalculatorInfo info1 = new Client.CalculatorInfo();
-            assert ui_client1.getInfo(info1) : "Failed getInfo at "+j;
+            assert ui_client1.getInfo(info1) : "Failed getInfo at " + j;
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + info1);
         }
 
@@ -197,11 +197,11 @@ public class NetworkTest {
 
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + ui_client1.getActivity());
             Client.CalculatorInfo info1 = new Client.CalculatorInfo();
-            assert ui_client1.getInfo(info1) : "Failed getInfo at "+j;
+            assert ui_client1.getInfo(info1) : "Failed getInfo at " + j;
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI1: " + info1);
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI2: " + ui_client2.getActivity());
             Client.CalculatorInfo info2 = new Client.CalculatorInfo();
-            assert ui_client2.getInfo(info2) : "Failed getInfo at "+j;
+            assert ui_client2.getInfo(info2) : "Failed getInfo at " + j;
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> UI2: " + info2);
             System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> C1: " + calculator.getActivity());
 
@@ -222,7 +222,7 @@ public class NetworkTest {
 
         System.err.println("------------------------------------------------[CLIENT]>newCase " + ui_client1.newCase(new HashMap()));
 
-        System.err.println("------------------------------------------------[CLIENT]>putFile " + ui_client1.putFile(new File("src/test/samples/novar.R"), new File("../src/test/samples/")));
+        System.err.println("------------------------------------------------[CLIENT]>putFile " + ui_client1.putFile(new File("src/test/samples/novar.R"), new File("./src/test/samples/")));
 
         System.err.println("------------------------------------------------[CLIENT]>execute " + ui_client1.execute("R", new DataListener() {
             public void informationLineArrived(String str) {

@@ -304,7 +304,6 @@ public class Calculator implements Protocol {
     public volatile CodeLauncher _lastLauncher;
     public volatile CodeLauncher _launcher;
     public Object _launcherLock = new Object();
-    public Object _lock = new Object();
     public LogCollector _log;
     public LogCollector _outerr;
     public String _name = "untitled";
@@ -376,12 +375,10 @@ public class Calculator implements Protocol {
             setActivity(IDLE_STATE, "av && (!_isAvailable)");
         } else if ((!av) && _isAvailable) {
             setActivity(UNAVAILABLE_STATE, "(!av) && _isAvailable");
-            synchronized (_lock) {
-                if (_reserver != null) {
-                    _reserver.askToStop(false, "checkTimeAvailability() && checkTestAvailability()");
-                }
-                _reserver = null;
+            if (_reserver != null) {
+                _reserver.askToStop(false, "checkTimeAvailability() && checkTestAvailability()");
             }
+            _reserver = null;
         }
         //System.err(" _isAvailable = av = "+av);
         _isAvailable = av;
@@ -480,12 +477,11 @@ public class Calculator implements Protocol {
         if ((!Digest.equals(newmd5, md5conf) && _reserver == null) /*|| _serversocket == null || _serversocket.isClosed()*/) {
 
             setActivity(UNAVAILABLE_STATE, "checkConf");
-            synchronized (_lock) {
-                if (_reserver != null) {
-                    _reserver.askToStop(false, "(!Digest.equals(newmd5, md5conf) && _reserver == null");
-                }
-                _reserver = null;
+
+            if (_reserver != null) {
+                _reserver.askToStop(false, "(!Digest.equals(newmd5, md5conf) && _reserver == null");
             }
+            _reserver = null;
 
             destroySessions("Calculator.checkConf digest updated");
 
@@ -741,9 +737,6 @@ public class Calculator implements Protocol {
 
         }
 
-        //synchronized (this) {
-        //    notifyAll();
-        //}
         destroySessions("Calculator.askToStop because " + why);
 
         try {

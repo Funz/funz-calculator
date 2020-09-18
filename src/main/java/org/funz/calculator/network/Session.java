@@ -377,7 +377,7 @@ public class Session extends Thread implements DataChannel {
                     err("run failed: " + this.calculator._lastLauncher.getReason());
                 }
 
-                /*synchronized (this.calculator._lock) {
+                /*
                  this.calculator._reserver = null;
                  }*/
                 setActivity(this.calculator.isAvailable() ? Calculator.IDLE_STATE : Calculator.UNAVAILABLE_STATE, "launcher failed");
@@ -465,21 +465,20 @@ public class Session extends Thread implements DataChannel {
         out("killRunningCode ...");
         if (this.calculator._reserver != null && this.calculator._secretCode.equals(_request.get(1))) {
             out("killing...");
-            synchronized (this.calculator._lock) {
-                out("killRunningCode: SYNC !");
 
-                if (this.calculator._reserver != null) {
-                    calculator._reserver._killed = true;
-                    this.calculator._reserver.stopLauncher();
-                    // force idle state now
-                    this.calculator._reserver = null;
-                    setActivity(Calculator.IDLE_STATE, "killRunningCode");
-                } else {
-                    err("   kill failed: reserver=null");
-                    notOwner("killRunningCode");
-                }
-                this.calculator._lock.notify();
+            out("killRunningCode: SYNC !");
+
+            if (this.calculator._reserver != null) {
+                calculator._reserver._killed = true;
+                this.calculator._reserver.stopLauncher();
+                // force idle state now
+                this.calculator._reserver = null;
+                setActivity(Calculator.IDLE_STATE, "killRunningCode");
+            } else {
+                err("   kill failed: reserver=null");
+                notOwner("killRunningCode");
             }
+
             returnYES();
             out("   killed.");
         } else {
@@ -642,127 +641,126 @@ public class Session extends Thread implements DataChannel {
     private void reserve() throws Exception {
         _askedToStop = false;
         out("reserve ...");
-        synchronized (this.calculator._lock) {
-            log("reserve: SYNC !");
-            if (!this.calculator.isAvailable()) {
-                err("calculator not available. (reserver=" + this.calculator._reserver + ")");
-                returnNO(Calculator.UNAVAILABLE_STATE);
-                askToStop(false, "calculator not available. (reserver=" + this.calculator._reserver + ")");
+
+        log("reserve: SYNC !");
+        if (!this.calculator.isAvailable()) {
+            err("calculator not available. (reserver=" + this.calculator._reserver + ")");
+            returnNO(Calculator.UNAVAILABLE_STATE);
+            askToStop(false, "calculator not available. (reserver=" + this.calculator._reserver + ")");
+            return;
+        }
+
+        if (this.calculator._reserver == null) {
+            log("reserve: _reserver == null");
+            returnYES();
+
+            log("reserve:_reserver = this");
+            this.calculator._reserver = this;
+
+            setActivity(Calculator.ALREADY_RESERVED + " by " + this.calculator._reserver, "reserve");
+            final Calculator currentcalc = this.calculator;
+            final String currenthost = this.calculator._reserver.toString();
+            //assert reservetimeout == null : "Reserve timeout already exists...";
+            if (reservetimeout != null && reservetimeout.getState() != State.TERMINATED) {
+                log("reserve: reservetimeout != null && reservetimeout.isAlive()");
+                reservetimeout.join();
+                reservetimeout = null;
+            }
+            reservetimeout = new Thread(new Runnable() {
+                public void run() {
+                    log("reservetimeout.run");
+                    try {
+                        synchronized (reservetimeout_lock) {
+                            reservetimeout_lock.wait(RESERVE_TIMEOUT);
+                        }
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace(System.err);
+                    }
+
+                    //log(" [reserve TIMEOUT] activity =?= " + Calculator.ALREADY_RESERVED + " by " + currenthost);
+                    if (!currentcalc.getActivity().startsWith(Calculator.ALREADY_RESERVED + " by " + currenthost)) {
+                        reservetimeout = null;
+                        return;
+                    }
+
+                    log(" [reserve TIMEOUT] force unreserve because status is still '" + currentcalc.getActivity() + "'");
+                    try {
+                        force_unreserve();
+                    } catch (Exception ex) {
+                    }
+                    log("reservetimeout.run END");
+                }
+            }, "NetworkClient.reservetimeout");
+            log("reserve: reservetimeout.start()");
+            reservetimeout.start();
+
+            _codeName = _reader.readLine();
+            int nTValues = Integer.parseInt(_reader.readLine());
+            _tvalues = new LinkedList();
+            for (int i = 0; i < nTValues; i++) {
+                String key = _reader.readLine();
+                String value = _reader.readLine();
+                _tvalues.add(new String[]{key, value});
+            }
+            log("reserve: tvalues=" + _tvalues);
+
+            for (int i = 0; i < calculator._codes.length; i++) {
+                //calculator.out.println(_codes[i].name + " =? " + _codeName);
+                if (this.calculator._codes[i].name.equals(_codeName)) {
+                    //calculator.out.println("> " + _codes[i].pluginFileName);
+                    _plugin = (CalculatorPlugin) this.calculator._plugins.get(this.calculator._codes[i].pluginURL);
+                    break;
+                }
+            }
+            if (_plugin == null) {
+                _plugin = new DefaultCalculatorPlugin();//Calculator.DEFAULT_PLUGIN;
+                ((DefaultCalculatorPlugin) _plugin).setSecure(calculator._isSecure);
+            }
+            _plugin.setCode(_codeName);
+            _plugin.setUser(_ip);
+
+            log("+ using plugin " + _plugin.getClass().getName() + " for " + _codeName);
+
+            try {
+                out("reserve: prepareNewProject");
+                _plugin.prepareNewProject(_tvalues);
+            } catch (Exception e) {
+                err("Plugin " + _plugin.getClass().getName() + " throwed exception " + e.toString());
+                returnNO("plugin exception " + e.getMessage());
+                askToStop(false, "Plugin " + _plugin.getClass().getName() + " throwed exception " + e.toString());
                 return;
             }
 
-            if (this.calculator._reserver == null) {
-                log("reserve: _reserver == null");
-                returnYES();
-
-                log("reserve:_reserver = this");
-                this.calculator._reserver = this;
-
-                setActivity(Calculator.ALREADY_RESERVED + " by " + this.calculator._reserver, "reserve");
-                final Calculator currentcalc = this.calculator;
-                final String currenthost = this.calculator._reserver.toString();
-                //assert reservetimeout == null : "Reserve timeout already exists...";
-                if (reservetimeout != null && reservetimeout.getState() != State.TERMINATED) {
-                    log("reserve: reservetimeout != null && reservetimeout.isAlive()");
-                    reservetimeout.join();
-                    reservetimeout = null;
-                }
-                reservetimeout = new Thread(new Runnable() {
-                    public void run() {
-                        log("reservetimeout.run");
-                        try {
-                            synchronized (reservetimeout_lock) {
-                                reservetimeout_lock.wait(RESERVE_TIMEOUT);
-                            }
-                        } catch (InterruptedException ex) {
-                            ex.printStackTrace(System.err);
-                        }
-
-                        //log(" [reserve TIMEOUT] activity =?= " + Calculator.ALREADY_RESERVED + " by " + currenthost);
-                        if (!currentcalc.getActivity().startsWith(Calculator.ALREADY_RESERVED + " by " + currenthost)) {
-                            reservetimeout = null;
-                            return;
-                        }
-
-                        log(" [reserve TIMEOUT] force unreserve because status is still '" + currentcalc.getActivity() + "'");
-                        try {
-                            force_unreserve();
-                        } catch (Exception ex) {
-                        }
-                        log("reservetimeout.run END");
-                    }
-                }, "NetworkClient.reservetimeout");
-                log("reserve: reservetimeout.start()");
-                reservetimeout.start();
-
-                _codeName = _reader.readLine();
-                int nTValues = Integer.parseInt(_reader.readLine());
-                _tvalues = new LinkedList();
-                for (int i = 0; i < nTValues; i++) {
-                    String key = _reader.readLine();
-                    String value = _reader.readLine();
-                    _tvalues.add(new String[]{key, value});
-                }
-                log("reserve: tvalues=" + _tvalues);
-
-                for (int i = 0; i < calculator._codes.length; i++) {
-                    //calculator.out.println(_codes[i].name + " =? " + _codeName);
-                    if (this.calculator._codes[i].name.equals(_codeName)) {
-                        //calculator.out.println("> " + _codes[i].pluginFileName);
-                        _plugin = (CalculatorPlugin) this.calculator._plugins.get(this.calculator._codes[i].pluginURL);
-                        break;
-                    }
-                }
-                if (_plugin == null) {
-                    _plugin = new DefaultCalculatorPlugin();//Calculator.DEFAULT_PLUGIN;
-                    ((DefaultCalculatorPlugin) _plugin).setSecure(calculator._isSecure);
-                }
-                _plugin.setCode(_codeName);
-                _plugin.setUser(_ip);
-
-                log("+ using plugin " + _plugin.getClass().getName() + " for " + _codeName);
-
-                try {
-                    out("reserve: prepareNewProject");
-                    _plugin.prepareNewProject(_tvalues);
-                } catch (Exception e) {
-                    err("Plugin " + _plugin.getClass().getName() + " throwed exception " + e.toString());
-                    returnNO("plugin exception " + e.getMessage());
-                    askToStop(false, "Plugin " + _plugin.getClass().getName() + " throwed exception " + e.toString());
-                    return;
-                }
-
-                try {
-                    this.calculator._secretCode = "" + this.calculator._calendar.getTimeInMillis();
-                } catch (Exception e) {
-                    this.calculator._secretCode = "0";
-                }
-                _writer.println(Calculator.RET_YES);
-                _writer.println(this.calculator._secretCode);
-                _writer.println(_ip);
-                _writer.println(this.calculator._isSecure ? "Y" : "N");
-                _writer.println(Calculator.END_OF_REQ);
-                _writer.flush();
-
-                _killed = false;
-                if (this.calculator._isSecure) {
-                    try {
-                        MessageDigest md = MessageDigest.getInstance("MD5");
-                        md.update(Calculator.PRIVATE_KEY.getBytes());
-                        md.update(this.calculator._secretCode.getBytes());
-                        this.calculator._key = md.digest();
-                    } catch (Exception e) {
-                        this.calculator._key = new byte[]{0};
-                    }
-                }
-
-            } else {
-                err("reserve failed, already reserved by: " + this.calculator._reserver);
-                returnNO(Calculator.ALREADY_RESERVED);
-                askToStop(false, "reserve failed, already reserved by: " + this.calculator._reserver);
+            try {
+                this.calculator._secretCode = "" + this.calculator._calendar.getTimeInMillis();
+            } catch (Exception e) {
+                this.calculator._secretCode = "0";
             }
-            this.calculator._lock.notify();
+            _writer.println(Calculator.RET_YES);
+            _writer.println(this.calculator._secretCode);
+            _writer.println(_ip);
+            _writer.println(this.calculator._isSecure ? "Y" : "N");
+            _writer.println(Calculator.END_OF_REQ);
+            _writer.flush();
+
+            _killed = false;
+            if (this.calculator._isSecure) {
+                try {
+                    MessageDigest md = MessageDigest.getInstance("MD5");
+                    md.update(Calculator.PRIVATE_KEY.getBytes());
+                    md.update(this.calculator._secretCode.getBytes());
+                    this.calculator._key = md.digest();
+                } catch (Exception e) {
+                    this.calculator._key = new byte[]{0};
+                }
+            }
+
+        } else {
+            err("reserve failed, already reserved by: " + this.calculator._reserver);
+            returnNO(Calculator.ALREADY_RESERVED);
+            askToStop(false, "reserve failed, already reserved by: " + this.calculator._reserver);
         }
+
         out("          ... reserve done.");
     }
 
@@ -837,12 +835,8 @@ public class Session extends Thread implements DataChannel {
 //            sessionTimeoutStop(false,"/REQUEST");
             log(" run._askedToStop");
 
-            synchronized (this.calculator._lock) {
-                if (this.calculator._reserver == this) {
-                    this.calculator._reserver = null;
-                }
-                this.calculator._lock.notify();
-
+            if (this.calculator._reserver == this) {
+                this.calculator._reserver = null;
             }
 
             log(" run.closing socket " + _sock);
@@ -860,13 +854,9 @@ public class Session extends Thread implements DataChannel {
             err(" run.Exception " + e);
 
             //System.err.println("SYNC ? " + this.calculator._lock);
-            err("synchronized (this.calculator._lock): " + this.calculator._lock);
-            synchronized (this.calculator._lock) {
-                if (this.calculator._reserver == this) {
-                    this.calculator._reserver = null;
-                    setActivity(Calculator.IDLE_STATE, "run/exception");
-                }
-                this.calculator._lock.notify();
+            if (this.calculator._reserver == this) {
+                this.calculator._reserver = null;
+                setActivity(Calculator.IDLE_STATE, "run/exception");
             }
 
             if (this.calculator._reserver == this) {
@@ -1046,24 +1036,23 @@ public class Session extends Thread implements DataChannel {
 
     private void unreserve() throws Exception {
         out("unreserve ...");
-        synchronized (this.calculator._lock) {
-            log("unreserve: SYNC !");
 
-            if (this.calculator._reserver == this) {
-                this.calculator._reserver = null;
-                this.calculator._secretCode = "";
-                this.calculator.log("unreserved");
-                returnYES();
-                setActivity(Calculator.IDLE_STATE, "unreserved");
-                //askToStop();
-            } else /*if (this.calculator._reserver == null) {
+        log("unreserve: SYNC !");
+
+        if (this.calculator._reserver == this) {
+            this.calculator._reserver = null;
+            this.calculator._secretCode = "";
+            this.calculator.log("unreserved");
+            returnYES();
+            setActivity(Calculator.IDLE_STATE, "unreserved");
+            //askToStop();
+        } else /*if (this.calculator._reserver == null) {
                 setActivity(Calculator.IDLE_STATE, "unreserve null");
             } else*/ {
-                err("unreserve failed: " + this.calculator._reserver + " != " + this);
-                notOwner("unreserve");
-            }
-            this.calculator._lock.notify();
+            err("unreserve failed: " + this.calculator._reserver + " != " + this);
+            notOwner("unreserve");
         }
+
         out("          ... unreserve done.");
 
         askToStop(false, "unreserve ...");
@@ -1071,28 +1060,27 @@ public class Session extends Thread implements DataChannel {
 
     private void force_unreserve() throws Exception {
         out("force_unreserve ...");
-        synchronized (this.calculator._lock) {
-            log("force_unreserve: SYNC !");
 
-            if (this.calculator._reserver == this) {
-                this.calculator._reserver = null;
-                this.calculator._secretCode = "";
-                this.calculator.log("force unreserved");
-                //_writer.println(Calculator.RET_YES);
-                //_writer.println(Calculator.END_OF_REQ);
+        log("force_unreserve: SYNC !");
 
-                //_writer.flush();
-                //_reader.reset();
-                setActivity(Calculator.IDLE_STATE, "force_unreserve");
-            } /*else if (this.calculator._reserver == null) {
+        if (this.calculator._reserver == this) {
+            this.calculator._reserver = null;
+            this.calculator._secretCode = "";
+            this.calculator.log("force unreserved");
+            //_writer.println(Calculator.RET_YES);
+            //_writer.println(Calculator.END_OF_REQ);
+
+            //_writer.flush();
+            //_reader.reset();
+            setActivity(Calculator.IDLE_STATE, "force_unreserve");
+        } /*else if (this.calculator._reserver == null) {
                 setActivity(Calculator.IDLE_STATE, "force_unreserve");
             }*/ else {
-                err("force unreserve failed: " + this.calculator._reserver);
-                //notOwner();
-            }
-            //askToStop();      
-            this.calculator._lock.notify();
+            err("force unreserve failed: " + this.calculator._reserver);
+            //notOwner();
         }
+        //askToStop();      
+
         out("               ... force_unreserve done.");
 
         askToStop(false, "force_unreserve ...");

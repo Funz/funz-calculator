@@ -88,7 +88,7 @@ public class Session extends Thread implements DataChannel {
     }
 
     public void out(String message) {
-        //log("        " + message);
+        log("        " + message);
         this.calculator.out(":" + hashCode() + ": " + message);
     }
 
@@ -481,6 +481,7 @@ public class Session extends Thread implements DataChannel {
                     err("   kill failed: reserver=null");
                     notOwner("killRunningCode");
                 }
+                this.calculator._lock.notify();
             }
             returnYES();
             out("   killed.");
@@ -763,6 +764,7 @@ public class Session extends Thread implements DataChannel {
                 returnNO(Calculator.ALREADY_RESERVED);
                 askToStop(false, "reserve failed, already reserved by: " + this.calculator._reserver);
             }
+            this.calculator._lock.notify();
         }
         out("          ... reserve done.");
     }
@@ -829,8 +831,7 @@ public class Session extends Thread implements DataChannel {
                     }
 
                 } catch (IOException e) {
-                    out("IOException: " + e.getMessage());
-                    log(" run.readRequest IOException " + e);
+                    err("IOException: " + e.getMessage());
                     returnNO("IOException:" + e.getMessage());
                     force_unreserve();
                 }
@@ -843,6 +844,8 @@ public class Session extends Thread implements DataChannel {
                 if (this.calculator._reserver == this) {
                     this.calculator._reserver = null;
                 }
+                this.calculator._lock.notify();
+
             }
 
             log(" run.closing socket " + _sock);
@@ -855,19 +858,22 @@ public class Session extends Thread implements DataChannel {
             } catch (Exception ex) {
                 err("Failed to close server & socket: " + ex.getMessage());
             }
-            log(" run.NO Exception");
+            log(" run.NOException");
         } catch (Exception e) {
             err(" run.Exception " + e);
 
             //System.err.println("SYNC ? " + this.calculator._lock);
+            err("synchronized (this.calculator._lock): " + this.calculator._lock);
             synchronized (this.calculator._lock) {
                 if (this.calculator._reserver == this) {
                     this.calculator._reserver = null;
                     setActivity(Calculator.IDLE_STATE, "run/exception");
                 }
+                this.calculator._lock.notify();
             }
 
             if (this.calculator._reserver == this) {
+                err("synchronized (this.calculator._launcherLock)");
                 synchronized (this.calculator._launcherLock) {
                     if (this.calculator._launcher != null && this.calculator._launcher.isAlive()) {
                         this.calculator._launcher.stopRunning();
@@ -1059,6 +1065,7 @@ public class Session extends Thread implements DataChannel {
                 err("unreserve failed: " + this.calculator._reserver + " != " + this);
                 notOwner("unreserve");
             }
+            this.calculator._lock.notify();
         }
         out("          ... unreserve done.");
 
@@ -1086,7 +1093,8 @@ public class Session extends Thread implements DataChannel {
                 err("force unreserve failed: " + this.calculator._reserver);
                 //notOwner();
             }
-            //askToStop();
+            //askToStop();      
+            this.calculator._lock.notify();
         }
         out("               ... force_unreserve done.");
 

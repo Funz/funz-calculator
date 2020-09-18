@@ -522,7 +522,6 @@ public class Calculator implements Protocol {
     }
 
     void destroySessions(final String why) {
-        System.err.println("_sessions " + _sessions);
         if (_sessions != null) {
             for (int i = 0; i < _sessions.size(); i++) {
                 _sessions.get(i).askToStop(false, why);

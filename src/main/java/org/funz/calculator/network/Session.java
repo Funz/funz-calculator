@@ -203,10 +203,7 @@ public class Session extends Thread implements DataChannel {
             sessionTimeoutStop(false, "askToStop");
         }
 
-        synchronized (this.calculator) {
-            this.calculator.removeSession(this);
-            this.calculator.notify();
-        }
+        this.calculator.removeSession(this);
 
         out("          ...askToStop done.");
     }

@@ -4,31 +4,31 @@ cache:
     - $HOME/.jabba/
 matrix:
   include:
-    - name: "Linux JDK11 - R2js - unit"
+    - name: "Linux JDK11 - unit"
       os: linux
       dist: xenial
       env:
         - JDK="openjdk@1.11"
         - TRAVIS_DIST_NAME="xenial"
 # Vary OS        
-    - name: "MacOS JDK11 - R2js - unit"
+    - name: "MacOS JDK11 - unit"
       os: osx
       osx_image: xcode10.1
       env:
         - JDK="openjdk@1.11"
         - TRAVIS_DIST_NAME="osx10"
-    - name: "Windows JDK11 - R2js - unit"
+    - name: "Windows JDK11 - unit"
       os: windows
       env:
         - JDK="openjdk@1.11"
         - TRAVIS_DIST_NAME="win"
-    - name: "Linux JDK8 - R2js - unit"
+    - name: "Linux JDK8 - unit"
       os: linux
       dist: xenial
       env:
         - JDK="adopt@1.8"
         - TRAVIS_DIST_NAME="xenial"
-    - name: "Linux JDK13 - R2js - unit"
+    - name: "Linux JDK13 - unit"
       os: linux
       dist: xenial
       env:

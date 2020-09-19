@@ -246,7 +246,7 @@
                     </then>
                     <else>
                         <property name="failed" value="1" />                        
-                        <echo message="Failures: @{test.class.id}" />
+                        <echo message="Failures: @{test.class}" />
                     </else>
                 </if>
             </sequential>

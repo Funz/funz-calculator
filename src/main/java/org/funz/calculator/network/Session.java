@@ -510,6 +510,10 @@ public class Session extends Thread implements DataChannel {
             this.calculator._dir = new File(this.calculator._spool + File.separator + this.calculator._name + File.separator + this.calculator._port + File.separator + "spool");
         }
         if (this.calculator._dir.isDirectory() || this.calculator._dir.mkdirs()) {
+            Disk.emptyDir(this.calculator._dir);
+            if (Disk.listRecursiveFiles(this.calculator._dir).length > 0) {
+                throw new IOException("Could not clean directory " + this.calculator._dir);
+            }
             returnYES();
         } else {
             throw new IOException("could not create directory " + this.calculator._dir);
@@ -540,11 +544,6 @@ public class Session extends Thread implements DataChannel {
             return;
         }
         returnYES();
-
-        Disk.emptyDir(this.calculator._dir);
-        if (Disk.listRecursiveFiles(this.calculator._dir).length > 0) {
-            throw new IOException("Could not clean directory " + this.calculator._dir);
-        }
 
         String name = ((String) _request.get(1));
         long size = Long.parseLong((String) _request.get(2));

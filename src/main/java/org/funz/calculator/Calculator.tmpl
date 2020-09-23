@@ -521,23 +521,25 @@ public class Calculator implements Protocol {
         return false;
     }
 
-    synchronized void destroySessions(final String why) {
+    void destroySessions(final String why) {
         if (_sessions != null) {
-            for (int i = 0; i < _sessions.size(); i++) {
-                if (_sessions!=null && _sessions.size()>i && _sessions.get(i)!=null)
-                    _sessions.get(i).askToStop(false, why);
-                i--;
+            List<Session> tostop = new LinkedList<>();
+            tostop.addAll(_sessions);
+            for (int i = 0; i < tostop.size(); i++) {
+                if (tostop.get(i) != null) {
+                    tostop.get(i).askToStop(false, why);
+                }
             }
         }
     }
 
-    public synchronized void removeSession(Session s) {
+    public void removeSession(Session s) {
         if (_sessions != null) {
             _sessions.remove(s);
         }
     }
 
-    synchronized void addSession(Session s) {
+    void addSession(Session s) {
         if (_sessions != null) {
             ListIterator<Session> iter = _sessions.listIterator();
             iter.add(s);

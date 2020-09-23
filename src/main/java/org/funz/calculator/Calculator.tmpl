@@ -521,7 +521,7 @@ public class Calculator implements Protocol {
         return false;
     }
 
-    void destroySessions(final String why) {
+    synchronized void destroySessions(final String why) {
         if (_sessions != null) {
             for (int i = 0; i < _sessions.size(); i++) {
                 if (_sessions.get(i)!=null)

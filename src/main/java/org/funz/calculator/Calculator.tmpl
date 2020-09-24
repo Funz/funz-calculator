@@ -523,10 +523,12 @@ public class Calculator implements Protocol {
 
     void destroySessions(final String why) {
         if (_sessions != null) {
-            for (int i = 0; i < _sessions.size(); i++) {
-                if (_sessions.get(i)!=null)
-                    _sessions.get(i).askToStop(false, why);
-                i--;
+            List<Session> tostop = new LinkedList<>();
+            tostop.addAll(_sessions);
+            for (int i = 0; i < tostop.size(); i++) {
+                if (tostop.get(i) != null) {
+                    tostop.get(i).askToStop(false, why);
+                }
             }
         }
     }

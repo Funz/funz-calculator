@@ -780,7 +780,9 @@ public class Calculator implements Protocol {
             }
 
             try {
-                wait(PING_PERIOD);
+                synchronized (this) {
+                    wait(PING_PERIOD);
+                }
             } catch (Exception ee) {
                 ee.printStackTrace();
             }

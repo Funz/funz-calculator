@@ -557,18 +557,18 @@ public class Calculator implements Protocol {
 
                 addSession(session);
 
-                log("Starting client...");
+                log("Starting session...");
                 session.start();
-                log("               ...Client started.");
+                log("               ...Session started.");
             } catch (Exception e) {
-                err("Failed to build client:" + e);
+                err("Failed to build session:" + e);
                 try {
                     Thread.sleep(PING_PERIOD);
                 } catch (InterruptedException ex) {
                 }
             }
         }
-        out("Stop network client.");
+        out("Stop waiting network client.");
     }
 
     static String[] monitors = __MONITOR__.split(",");

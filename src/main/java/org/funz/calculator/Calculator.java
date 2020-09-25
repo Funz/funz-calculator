@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Calendar;
@@ -39,8 +40,6 @@ import org.hyperic.sigar.SigarException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Locale;
 import org.apache.commons.exec.OS;
@@ -51,7 +50,9 @@ import org.funz.log.LogFile;
 import org.funz.log.LogNull;
 import org.funz.log.LogTicToc;
 
-/** Calculation agent */
+/**
+ * Calculation agent
+ */
 public class Calculator implements Protocol {
 
     private static com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
@@ -140,9 +141,9 @@ public class Calculator implements Protocol {
                     freecpu += cpu.getIdle();
                 }
             } catch (SigarException se) {
-                log("[SIGAR] cannot get system stats:" +se.getMessage());
+                log("[SIGAR] cannot get system stats:" + se.getMessage());
             } catch (UnsatisfiedLinkError le) {
-                log("[SIGAR] failed to get system stats:" +le.getMessage());
+                log("[SIGAR] failed to get system stats:" + le.getMessage());
             }
         }
 
@@ -247,9 +248,9 @@ public class Calculator implements Protocol {
                 System.err.println("usage: calculator configfile");
                 System.exit(1);
             }
-            
+
             LogTicToc.T(); // Ensure LogTicToc static vars are initialized...
-            final Calculator calc = new Calculator(args[0], new LogConsole(), 
+            final Calculator calc = new Calculator(args[0], new LogConsole(),
                     new LogFile(new File(System.getProperty("java.io.tmpdir"), "calculator." + LogTicToc.T() + ".log")));
             calc.runloop();
             System.exit(0);
@@ -304,7 +305,6 @@ public class Calculator implements Protocol {
     public volatile CodeLauncher _lastLauncher;
     public volatile CodeLauncher _launcher;
     public Object _launcherLock = new Object();
-    public Object _lock = new Object();
     public LogCollector _log;
     public LogCollector _outerr;
     public String _name = "untitled";
@@ -313,7 +313,9 @@ public class Calculator implements Protocol {
     public Session _reserver = null;
     public String _secretCode;
     public File _sessionDir;
-    /** Run this thread when system shuts down the process */
+    /**
+     * Run this thread when system shuts down the process
+     */
     Thread _shutdownCleaner = new Thread() {
 
         public void run() {
@@ -330,18 +332,19 @@ public class Calculator implements Protocol {
     };
     public long _since = 0;
     public ServerSocket _serversocket;
-    public String _spool;    //________________________________________________________________________________ MY CLIENT THREAD
-    //
+    public String _spool;
     public TimePeriod _unavailables[];
     public String[] _unavailable_tests;
     public Properties _vars;
     byte[] md5conf;
 
-    /** Creates a server from an xml file. */
+    /**
+     * Creates a server from an xml file.
+     */
     public Calculator(String conf, LogCollector outerr, LogCollector log) throws Exception {
-        _outerr=outerr;
-        _log=log==null?new LogNull("Calculator"):log;
-        
+        _outerr = outerr;
+        _log = log == null ? new LogNull("Calculator") : log;
+
         Runtime.getRuntime().addShutdownHook(_shutdownCleaner);
         _since = Calendar.getInstance().getTimeInMillis();
 
@@ -350,15 +353,19 @@ public class Calculator implements Protocol {
         loadConf(conf);
     }
 
-    public boolean isAvailable(){return _isAvailable;}
+    public boolean isAvailable() {
+        return _isAvailable;
+    }
 
-    /** Checks whether the calculator is not inside an unavailable condition. */
+    /**
+     * Checks whether the calculator is not inside an unavailable condition.
+     */
     public void checkAvailability() {
         if (_unavailables == null || _unavailable_tests == null || _calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY || _calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
             if (!_isAvailable) {
-                setActivity(IDLE_STATE,"checkAvailability");
+                setActivity(IDLE_STATE, "checkAvailability");
             }
-                //System.err("_isAvailable = true");
+            //System.err("_isAvailable = true");
             _isAvailable = true;
             return;
         }
@@ -369,19 +376,19 @@ public class Calculator implements Protocol {
             setActivity(IDLE_STATE, "av && (!_isAvailable)");
         } else if ((!av) && _isAvailable) {
             setActivity(UNAVAILABLE_STATE, "(!av) && _isAvailable");
-            synchronized (_lock) {
-                if (_reserver != null) {
-                    _reserver.askToStop(false,"checkTimeAvailability() && checkTestAvailability()");
-                }
-                _reserver = null;
+            if (_reserver != null) {
+                _reserver.askToStop(false, "checkTimeAvailability() && checkTestAvailability()");
             }
+            _reserver = null;
         }
-                        //System.err(" _isAvailable = av = "+av);
+        //System.err(" _isAvailable = av = "+av);
         _isAvailable = av;
         return;
     }
 
-    /** to support following line in calculator.xml: <UNAVAILABLE_TIME from="13:15" until="19:00" />
+    /**
+     * to support following line in calculator.xml:
+     * <UNAVAILABLE_TIME from="13:15" until="19:00" />
      */
     private boolean checkTimeAvailability() {
         long now = _calendar.get(Calendar.HOUR_OF_DAY) * 3600000L + _calendar.get(Calendar.MINUTE) * 60000L;
@@ -398,7 +405,8 @@ public class Calculator implements Protocol {
         return av;
     }
 
-    /** to support following line in calculator.xml:
+    /**
+     * to support following line in calculator.xml:
      * <!--UNAVAILABLE_IF test="a=`qstat -g c | tail -1`;numfreeslots=${a:46:7}; if [ $numfreeslots -le 1 ]; then echo TRUE; fi"/>
      * <!--UNAVAILABLE_IF test="echo TRUE"/>
      * <!--UNAVAILABLE_IF test="freecpu=`grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}' | cut -d. -f1`;if [ $freecpu -le 90 ]; then echo TRUE; fi"/>
@@ -415,7 +423,9 @@ public class Calculator implements Protocol {
                 ASCII.saveFile(tmp, test);
             } catch (IOException e1) {
                 err("tmp file " + tmp.getAbsolutePath() + " is not created. Test <" + test + "> is bypassed.");
-                if (tmp.isFile()) tmp.delete();
+                if (tmp.isFile()) {
+                    tmp.delete();
+                }
                 return true;
             }
 
@@ -431,7 +441,7 @@ public class Calculator implements Protocol {
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                } finally{
+                } finally {
                     bis.close();
                     is.close();
                 }
@@ -445,14 +455,16 @@ public class Calculator implements Protocol {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                if (tmp.isFile()) tmp.delete();
+                if (tmp.isFile()) {
+                    tmp.delete();
+                }
             }
         }
         return av;
     }
 
     /**
-    @return conf has changed
+     * @return conf has changed
      */
     boolean checkConf() {
 
@@ -465,25 +477,34 @@ public class Calculator implements Protocol {
 
         if ((!Digest.equals(newmd5, md5conf) && _reserver == null) /*|| _serversocket == null || _serversocket.isClosed()*/) {
 
-            setActivity(UNAVAILABLE_STATE,"checkConf");
-            synchronized (_lock) {
-                if (_reserver != null) {
-                    _reserver.askToStop(false,"(!Digest.equals(newmd5, md5conf) && _reserver == null");
-                }
-                _reserver = null;
+            setActivity(UNAVAILABLE_STATE, "checkConf");
+
+            if (_reserver != null) {
+                _reserver.askToStop(false, "(!Digest.equals(newmd5, md5conf) && _reserver == null");
             }
+            _reserver = null;
 
             destroySessions("Calculator.checkConf digest updated");
 
             try {
                 if (_serversocket != null) {
-                _serversocket.close();
+                    _serversocket.close();
                 }
             } catch (IOException ex) {
                 log("!  Impossible to close Socket:\n" + ex.getMessage());
 
             }
             _serversocket = null;
+
+            // Close all hosts sockets
+            try {
+                for (Host host : this._hosts) {
+                    host.finalize();
+                }
+            } catch (Throwable ex) {
+                log("!  Impossible to close Host socket:\n" + ex.getMessage());
+
+            }
 
             try {
                 loadConf(_conf);
@@ -501,16 +522,13 @@ public class Calculator implements Protocol {
         return false;
     }
 
-    void destroySessions(String why) {
+    void destroySessions(final String why) {
         if (_sessions != null) {
-            ListIterator<Session> iter = _sessions.listIterator();
-            while (iter.hasNext()) {
-                try {
-                    Session next = iter.next();
-                    if (next!=null)
-                        next.askToStop(false, why);
-                } catch (ConcurrentModificationException e) {
-                    //do nothing
+            List<Session> tostop = new LinkedList<>();
+            tostop.addAll(_sessions);
+            for (int i = 0; i < tostop.size(); i++) {
+                if (tostop.get(i) != null) {
+                    tostop.get(i).askToStop(false, why);
                 }
             }
         }
@@ -518,12 +536,7 @@ public class Calculator implements Protocol {
 
     public void removeSession(Session s) {
         if (_sessions != null) {
-            ListIterator<Session> iter = _sessions.listIterator();
-            while (iter.hasNext()) {
-                if (iter.next().equals(s)) {
-                    iter.remove();
-                }
-            }
+            _sessions.remove(s);
         }
     }
 
@@ -536,35 +549,39 @@ public class Calculator implements Protocol {
 
     // receive connections in this loop
     private void waitNewClient() {
-       while (!askToStop) {
+        while (!askToStop) {
             try {
                 //if (!_serversocket.isClosed()) {
                 out("Accept connection on local adress " + _serversocket.getLocalSocketAddress());
 
-                log("Open server socket... ("+_serversocket+")");
+                log("Open server socket... (" + _serversocket + ")");
                 Session session = new Session(this, _serversocket.accept());
-                log("                  ...Server socket opened ("+_serversocket.toString()+") !");
+                log("                  ...Server socket opened (" + _serversocket.toString() + ") !");
 
                 addSession(session);
 
-                log("Starting client...");
+                log("Starting session...");
                 session.start();
-                log("               ...Client started.");
+                log("               ...Session started.");
+            } catch (SocketException e) {
+                if (askToStop) {
+                    break;
+                }
             } catch (Exception e) {
-                err("Failed to build client:" + e);
+                err("Failed to build session:" + e);
                 try {
-                    Thread.sleep(PING_PERIOD);
+                    Thread.sleep(2 * PING_PERIOD);
                 } catch (InterruptedException ex) {
                 }
             }
         }
-        out("Stop network client.");
+        out("Stop waiting network client.");
     }
 
     static String[] monitors = "".split(",");
 
     public void log(String s) {
-        _log.logMessage(LogCollector.SeverityLevel.INFO, true, LogTicToc.HMS()+" "+s);
+        _log.logMessage(LogCollector.SeverityLevel.INFO, true, LogTicToc.HMS() + " " + s);
     }
 
     public void err(String s) {
@@ -594,8 +611,8 @@ public class Calculator implements Protocol {
             try {
                 _name = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException ee) {
-                _name = "undefined-"+Math.floor(Math.random()*1000);
-                err("Calculator hostname not found ! Using "+_name); //System.exit(1);
+                _name = "undefined-" + Math.floor(Math.random() * 1000);
+                err("Calculator hostname not found ! Using " + _name); //System.exit(1);
             }
             log("Calculator name set to hostname");
         }
@@ -637,7 +654,9 @@ public class Calculator implements Protocol {
             if (_codes[i].pluginURL != null && _codes[i].pluginURL.length() > 0) {
                 try {
                     Object p = URLMethods.scanURLJar(_codes[i].pluginURL, "org.funz.calculator.plugin.CalculatorPlugin");
-                    if (p == null) throw new Exception("Cannot instanciate CalculatorPlugin from "+_codes[i].pluginURL);
+                    if (p == null) {
+                        throw new Exception("Cannot instanciate CalculatorPlugin from " + _codes[i].pluginURL);
+                    }
                     CalculatorPlugin cp = (CalculatorPlugin) p;
                     log("+ found plugin " + _codes[i].pluginURL + " (class " + cp.getClass().getName() + ")");
                     _plugins.put(_codes[i].pluginURL, cp);
@@ -647,11 +666,13 @@ public class Calculator implements Protocol {
             }
         }
 
-        if (_serversocket!=null) _serversocket.close(); // if reloading...
+        if (_serversocket != null) {
+            _serversocket.close(); // if reloading...
+        }
         _serversocket = new ServerSocket(_port) {
             @Override
             public String toString() {
-                return "Server socket on port "+_port+" "+super.toString();
+                return "Server socket on port " + _port + " " + super.toString();
             }
         };
         _port = _serversocket.getLocalPort();
@@ -708,35 +729,30 @@ public class Calculator implements Protocol {
         return askToStop;
     }
 
-    public void askToStop(String why) {
-        err("Calculator.askToStop because " + why);
+    public synchronized void askToStop(String why) {
+        err("Calculator.askToStop because " + why + " with reserver: " + _reserver);
         askToStop = true;
-        err("Session: " + _reserver);
 
         try {
             _serversocket.close();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        
+
         if (_reserver != null) {
-            _reserver.askToStop(true,"Calculator.askToStop because " + why);
+            _reserver.askToStop(true, "Calculator.askToStop because " + why);
 
         }
 
-        //synchronized (this) {
-        //    notifyAll();
-        //}
-        
-        destroySessions("Calculator.askToStop because "+why);
-        
         try {
             log("NetworkListener join...");
-            NetworkListener.join();            
+            NetworkListener.join();
             log("NetworkListener     ...joined");
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
+        
+        destroySessions("Calculator.askToStop because " + why);
     }
     public final Thread NetworkListener = new Thread("NetworkListener") {
 
@@ -745,9 +761,10 @@ public class Calculator implements Protocol {
         }
     };
 
-    /** main loop */
     /**
-    @return restart or not
+     * main loop
+     *
+     * @return restart or not
      */
     public boolean run() {
         if (NetworkListener.getState().equals(State.NEW)) {

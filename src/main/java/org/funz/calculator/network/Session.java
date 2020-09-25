@@ -161,6 +161,7 @@ public class Session extends Thread implements DataChannel {
     public void askToStop(boolean sync, String why) {
         out("askToStop ... " + this + " because " + why);
         if (_askedToStop) {
+            this.calculator.removeSession(this);
             out("          ...askToStop already called.");
             return;
         }
@@ -204,7 +205,6 @@ public class Session extends Thread implements DataChannel {
         }
 
         this.calculator.removeSession(this);
-
         out("          ...askToStop done.");
     }
 

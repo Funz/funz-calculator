@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
+import java.net.BindException;
 
 import org.w3c.dom.Element;
 
@@ -61,6 +62,8 @@ public class Host {
             reachable = true;
         } catch (UnknownHostException uhe) {
             calculator.err("host not found: " + _address);
+        } catch (BindException ex) {
+            calculator.err("Address already in use: " +_address+ ":" +_port +" or no more UDP ports available on system (check your limitations 'sysctl net.ipv4.ip_local_port_range')");
         } catch (Exception ex) {
             ex.printStackTrace();
         }

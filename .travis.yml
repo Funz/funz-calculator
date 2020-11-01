@@ -47,7 +47,7 @@ before_install:
   - source $GRAVIS/install-jdk
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export HOMEBREW_NO_AUTO_UPDATE=1; travis_wait brew update >/dev/null; brew install ant; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install ant -y; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install ant -y; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install ant zip -y; fi
 install:
   - WD=$PWD
   - cd ..

@@ -52,6 +52,8 @@ import org.funz.log.LogTicToc;
 
 /**
  * Calculation agent
+ *
+ * WARNING: This file is automatically regenerated with Calculator.tmpl when executing "ant compile" task
  */
 public class Calculator implements Protocol {
 
@@ -239,8 +241,9 @@ public class Calculator implements Protocol {
             w.println(obj);
         }
     }
-    public static final String ELEM_CALCULATOR = "CALCULATOR", ELEM_HOST = "HOST", ELEM_CODE = "CODE", ELEM_TIMEUNAVB = "UNAVAILABLE_TIME", ELEM_TESTUAVB = "UNAVAILABLE_IF", ELEM_QSLOTS = "NEEDED_QSLOTS", ATTR_NAME = "name", ATTR_PLUGIN = "cplugin", ATTR_PORT = "port", ATTR_COMMAND = "command", ATTR_COMMENT = "comment", ATTR_SPOOL = "spool", ATTR_FROM = "from", ATTR_TEST = "test", ATTR_UNTIL = "until", ATTR_LOG = "log", ATTR_SECURE = "secure", ATTR_TIMEOUT = "timeout";
+    public static final String ELEM_CALCULATOR = "CALCULATOR", ELEM_HOST = "HOST", ELEM_CODE = "CODE", ELEM_TIMEUNAVB = "UNAVAILABLE_TIME", ELEM_TESTUAVB = "UNAVAILABLE_IF", ELEM_QSLOTS = "NEEDED_QSLOTS", ATTR_NAME = "name", ATTR_PLUGIN = "cplugin", ATTR_PORT = "port", ATTR_COMMAND = "command", ATTR_COMMENT = "comment", ATTR_SPOOL = "spool", ATTR_FROM = "from", ATTR_TEST = "test", ATTR_UNTIL = "until", ATTR_LOG = "log", ATTR_SECURE = "secure", ATTR_TIMEOUT = "timeout", ATTR_PING_PERIOD = "PING_PERIOD";
     public static int PING_PERIOD = Protocol.PING_PERIOD;
+
 
     public static void main(String args[]) {
         try {
@@ -635,6 +638,15 @@ public class Calculator implements Protocol {
         if (_spool.length() == 0) {
             _spool = System.getProperty("java.io.tmpdir") + File.separator + "funz";
         }
+
+        try {
+            PING_PERIOD = Integer.parseInt(e.getAttribute(ATTR_PING_PERIOD)) * 1000;
+        } catch (Exception ex) {
+            PING_PERIOD = Protocol.PING_PERIOD;
+        }
+
+        log("Ping period: " + PING_PERIOD + "ms");
+
         String secure = e.getAttribute(ATTR_SECURE);
         _isSecure = secure != null && (secure.equals("yes") || secure.equals("on") || secure.equals("true"));
 

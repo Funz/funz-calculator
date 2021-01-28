@@ -1019,6 +1019,15 @@ public class Session extends Thread implements DataChannel {
         }
         _writer.flush();
         archive.delete();
+        if (this.calculator._dir != null) {
+            try {
+                out("cleaning - removing folder " + this.calculator._dir.getParentFile());
+                Disk.removeDir(this.calculator._dir.getParentFile());
+            } catch (Exception e) {
+                err("Removing folder exception:" + e.toString());
+                e.printStackTrace();
+            }
+        }
         log("transfer over");
         out("               ... transferArchive done.");
     }

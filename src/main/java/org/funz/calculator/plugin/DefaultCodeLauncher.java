@@ -236,7 +236,7 @@ public class DefaultCodeLauncher extends CodeLauncher {
     }
 
     public void setExecutionParameters(String command, File dir, List files) {
-        _command = command;
+        _command = command.replace("/",File.separator).replace("\\", File.separator);
         _dir = dir;
         _files = files;
         if (tunnel != null) {

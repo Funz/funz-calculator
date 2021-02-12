@@ -17,22 +17,27 @@ cwd=`pwd`
 qname="_"$$
 export pid=$cwd/node.PID
 
-# Read SBATCH options anywhere in input files
 export SBATCH_OPT=""
 SBATCH_OPT_in=`grep "SBATCH " * | sed 's/.*SBATCH //' | tr '\n' ' ' | tr -d '\r'`
-  echo "parse SBATCH "$SBATCH_OPT_in >> out.txt
+  echo "parse SBATCH "$SBATCH_OPT_in >> log.txt
 if [ ! "$SBATCH_OPT_in""zz" = "zz" ] ; then
   export SBATCH_OPT=$SBATCH_OPT_in
 fi
-echo "SBATCH: "$SBATCH_OPT
+echo "SBATCH: "$SBATCH_OPT >> log.txt
 
 srun -J $qname $SBATCH_OPT --export=ALL --chdir=$cwd $cmd $input >> out.txt &
 mid=$!
 
 sleep 1
 
-if [ `grep "Unable to allocate resources" out.txt | wc -w` != 0 ] ; then
-  exit -1
+if [ `grep "Unable to allocate resources" err.txt | wc -w` != 0 ] ; then
+  echo "Not enought resources. Waiting 10s before restart." >> err.txt
+  sleep 10
+  exit 1
+elif [ `grep "Stale file handle" err.txt | wc -w` != 0 ] ; then
+  echo "NFS latency. Waiting 10s before restart." >> err.txt
+  sleep 10
+  exit 2
+else
+  wait $mid
 fi
-
-wait $mid

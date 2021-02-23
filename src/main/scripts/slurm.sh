@@ -25,7 +25,7 @@ if [ ! "$SBATCH_OPT_in""zz" = "zz" ] ; then
 fi
 echo "SBATCH: "$SBATCH_OPT >> log.txt
 
-salloc -J $qname $SBATCH_OPT --export=ALL --chdir=$cwd $cmd $input >> out.txt &
+salloc -J $qname $SBATCH_OPT --chdir=$cwd $cmd $input >> out.txt &
 mid=$!
 
 sleep 1

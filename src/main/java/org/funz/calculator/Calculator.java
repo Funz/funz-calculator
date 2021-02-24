@@ -131,41 +131,45 @@ public class Calculator implements Protocol {
             }
         }
 
-        if (OS.isFamilyWindows()) {
-            mem = sys.getFreePhysicalMemorySize();
-            freecpu = (double) sys.getAvailableProcessors();//Math.max(0, (double) sys.getAvailableProcessors() - sys.getSystemLoadAverage());
-        } else {
-            try {
-                mem = sigar.getMem().getActualFree();
-                CpuPerc[] cpus = sigar.getCpuPercList();
-                freecpu = 0;
-                for (CpuPerc cpu : cpus) {
-                    freecpu += cpu.getIdle();
+        try {
+            if (OS.isFamilyWindows()) {
+                mem = sys.getFreePhysicalMemorySize();
+                freecpu = (double) sys.getAvailableProcessors();//Math.max(0, (double) sys.getAvailableProcessors() - sys.getSystemLoadAverage());
+            } else {
+                try {
+                    mem = sigar.getMem().getActualFree();
+                    CpuPerc[] cpus = sigar.getCpuPercList();
+                    freecpu = 0;
+                    for (CpuPerc cpu : cpus) {
+                        freecpu += cpu.getIdle();
+                    }
+                } catch (SigarException se) {
+                    throw new Exception("[SIGAR] cannot get system stats:" + se.getMessage());
+                } catch (UnsatisfiedLinkError le) {
+                    throw new Exception("[SIGAR] failed to get system stats:" + le.getMessage());
                 }
-            } catch (SigarException se) {
-                log("[SIGAR] cannot get system stats:" + se.getMessage());
-            } catch (UnsatisfiedLinkError le) {
-                log("[SIGAR] failed to get system stats:" + le.getMessage());
             }
-        }
 
-        activity = activity + " (cpu=$$cpu$$;mem=$$mem$$;disk=$$disk$$;)";
-        if (freecpu <= 0) {
-            activity = activity.replace("$$cpu$$", "?");
-        } else {
-            activity = activity.replace("$$cpu$$", "" + trim(freecpu));
-        }
+            activity = activity + " (cpu=$$cpu$$;mem=$$mem$$;disk=$$disk$$;)";
+            if (freecpu <= 0) {
+                activity = activity.replace("$$cpu$$", "?");
+            } else {
+                activity = activity.replace("$$cpu$$", "" + trim(freecpu));
+            }
 
-        if (mem <= 0) {
-            activity = activity.replace("$$mem$$", "?");
-        } else {
-            activity = activity.replace("$$mem$$", "" + trimBin(mem));
-        }
+            if (mem <= 0) {
+                activity = activity.replace("$$mem$$", "?");
+            } else {
+                activity = activity.replace("$$mem$$", "" + trimBin(mem));
+            }
 
-        if (_spool == null) {
-            activity = activity.replace("$$disk$$", "?");
-        } else {
-            activity = activity.replace("$$disk$$", "" + trimBin(new File(_spool).getFreeSpace()));
+            if (_spool == null) {
+                activity = activity.replace("$$disk$$", "?");
+            } else {
+                activity = activity.replace("$$disk$$", "" + trimBin(new File(_spool).getFreeSpace()));
+            }
+        } catch (Exception e) {
+            log(e.getMessage());
         }
 
         this._activity = activity;

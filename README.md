@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Funz/funz-calculator.png)](https://travis-ci.org/Funz/funz-calculator)
+[![Java CI](https://github.com/Funz/funz-calculator/actions/workflows/ant.yml/badge.svg)](https://github.com/Funz/funz-calculator/actions/workflows/ant.yml)
 [![codecov](https://codecov.io/gh/Funz/funz-calculator/branch/master/graph/badge.svg)](https://codecov.io/gh/Funz/funz-calculator)
 
 # funz-calculator

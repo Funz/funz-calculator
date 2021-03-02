@@ -64,6 +64,14 @@ jobs:
         WD=$PWD
         cd ..
         git clone https://github.com/Funz/funz-profile
+        git clone https://github.com/Funz/funz-core
+        cd funz-core
+        ant clean dist
+        cd ..
+        git clone https://github.com/Funz/funz-client
+        cd funz-client
+        ANT_OPTS="-Xmx6G -Xss1G" ant clean dist-test
+        cd ..
         cd $WD
     - run: ant clean dist
     - uses: actions/upload-artifact@v2

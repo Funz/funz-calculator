@@ -19,7 +19,7 @@ jobs:
     - uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java }}
-        java-package: jdk
+        java-package: jdkdesktop
     - uses: r-lib/actions/setup-r@v1
       with:
         r-version: 3.6
@@ -46,7 +46,9 @@ jobs:
         cd ..
         cd $WD
       shell: bash
-    - run: ant -noinput -buildfile build.xml test
+    - uses: GabrielBB/xvfb-action@v1
+      with: 
+        run: ant -noinput -buildfile build.xml test
       id: anttest
       continue-on-error: true
     - uses: OrbitalOwen/desktop-screenshot-action@0.1
@@ -57,6 +59,8 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
     - uses: codecov/codecov-action@v1
       if: matrix.os == 'ubuntu-latest'
+    - if: steps.anttest.outcome != 'success'
+      run: exit 1
 
   release:
     runs-on: ubuntu-latest

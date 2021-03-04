@@ -19,7 +19,7 @@ jobs:
     - uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java }}
-        java-package: jdkdesktop
+        java-package: jdk
     - uses: r-lib/actions/setup-r@v1
       with:
         r-version: 3.6

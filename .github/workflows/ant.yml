@@ -47,6 +47,12 @@ jobs:
         cd $WD
       shell: bash
     - run: ant -noinput -buildfile build.xml test
+      id: anttest
+      continue-on-error: true
+    - uses: OrbitalOwen/desktop-screenshot-action@0.1
+      if: steps.anttest.outcome != 'success'
+      with:
+        file-name: 'test.jpg'
     - run: ant -noinput -buildfile build.xml coverage
       if: matrix.os == 'ubuntu-latest'
     - uses: codecov/codecov-action@v1

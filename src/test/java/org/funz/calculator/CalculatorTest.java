@@ -204,7 +204,13 @@ public class CalculatorTest {
             }
 
         });
+        
+        final Thread thread = Thread.currentThread();
+        final ClassLoader previous = thread.getContextClassLoader();
+        thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
         Funz_v1.init(c, null, null);
+        thread.setContextClassLoader(previous);
+
         Log.level = 10;
         System.err.println("+++++++++++++++++++++++++ /startFunzClient ");
     }

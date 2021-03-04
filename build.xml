@@ -228,7 +228,7 @@
                 <record name="${test.class.id}.txt" action="start"/>
                 <jacoco:coverage>
                     <java classname="${test.class.id}" fork="true" timeout="360000" failonerror="false" resultproperty="@{test.class}.failed">
-                        <jvmarg value='-Dnashorn.args="--no-deprecation-warning"'/>
+                        <!-- jvmarg value='-Dnashorn.args="-.-no-deprecation-warning"'/ -->
                         <classpath refid="lib.classpath" />
                         <classpath refid="core.classpath" />
                         <classpath refid="client.classpath" />
@@ -290,7 +290,7 @@
     <!-- run application -->
     <target name="run-calculator">
         <java classname="org.funz.calculator.Calculator" fork="true">
-            <jvmarg value='-Dnashorn.args="--no-deprecation-warning"'/>            
+            <!--jvmarg value='-Dnashorn.args="-.-no-deprecation-warning"'/-->
             <classpath refid="compile.path" />
             <classpath path="${build.dir}" />
             <jvmarg value="-Dapp.home=." />

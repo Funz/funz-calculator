@@ -51,10 +51,17 @@ jobs:
         run: ant -noinput -buildfile build.xml test
       id: anttest
       continue-on-error: true
-    - run: sudo apt-get install imagemagick
-      if: matrix.os == 'ubuntu-latest' && steps.mvntest.outcome != 'success'
-    - uses: OrbitalOwen/desktop-screenshot-action@0.1
-      if: steps.anttest.outcome != 'success'
+    - if: steps.anttest.outcome != 'success'
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifacts-${{ matrix.os }}-${{ matrix.java }}
+        path: |
+          *.txt
+          *.log
+    - if: matrix.os == 'ubuntu-latest' && steps.mvntest.outcome != 'success'
+      run: sudo apt-get install imagemagick
+    - if: steps.anttest.outcome != 'success'
+      uses: OrbitalOwen/desktop-screenshot-action@0.1
       with:
         file-name: 'test-${{ matrix.os }}-${{ matrix.java }}.jpg'
     - run: ant -noinput -buildfile build.xml coverage

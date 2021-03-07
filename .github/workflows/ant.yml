@@ -42,7 +42,7 @@ jobs:
         cd ..
         git clone https://github.com/Funz/funz-client
         cd funz-client
-        ANT_OPTS="-Xmx6G -Xss1G" ant clean dist
+        ANT_OPTS="-Xmx6G -Xss1G" ant clean dist-test
         cd ..
         cd $WD
       shell: bash

@@ -42,13 +42,13 @@ jobs:
         cd ..
         git clone https://github.com/Funz/funz-client
         cd funz-client
-        ANT_OPTS="-Xmx6G -Xss1G" ant clean dist-test
+        ANT_OPTS="-Xmx6G -Xss1G" ant clean dist
         cd ..
         cd $WD
       shell: bash
     - uses: GabrielBB/xvfb-action@v1
       with: 
-        run: ant -noinput -buildfile build.xml test
+        run: ant -noinput -buildfile build.xml clean test
       id: anttest
       continue-on-error: true
     - if: steps.anttest.outcome != 'success'
@@ -86,10 +86,6 @@ jobs:
         git clone https://github.com/Funz/funz-core
         cd funz-core
         ant clean dist
-        cd ..
-        git clone https://github.com/Funz/funz-client
-        cd funz-client
-        ANT_OPTS="-Xmx6G -Xss1G" ant clean dist-test
         cd ..
         cd $WD
     - run: ant clean dist

@@ -190,7 +190,7 @@ public class Session extends Thread implements DataChannel {
                 _sock = null;
             }
         } catch (IOException ex) {
-            err(ex.getLocalizedMessage());
+            //err(ex.getLocalizedMessage()); No need to report. We already know that socket will be close
         }
 
         if (sync) {

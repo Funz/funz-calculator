@@ -916,9 +916,7 @@ public class Session extends Thread implements DataChannel {
             public void run() {
                 log(".......................................................  requesttimeout.RUN " + by);
                 try {
-                    synchronized (requesttimeout) {
-                        requesttimeout.wait(REQUEST_TIMEOUT);
-                    }
+                    wait(REQUEST_TIMEOUT);
                 } catch (InterruptedException ex) {
                     log(".......................................................  requesttimeout.INTERRUPT " + by);
                 }

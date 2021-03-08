@@ -892,8 +892,8 @@ public class Session extends Thread implements DataChannel {
         if (requesttimeout != null && requesttimeout.getState() != State.TERMINATED) {
             log(".......................................................  requesttimeout: !=null && requesttimeout.getState() " + requesttimeout.getState());
             sessionTimeout = false;
-            if (requesttimeout != null) {
-                requesttimeout.interrupt();
+            synchronized (requesttimeout_lock) {
+                requesttimeout_lock.notify();
             }
 
             if (sync) { //most always join, otherwise sessionTimeout will return true before ending breaking previous requesttimeout thread...
@@ -903,6 +903,10 @@ public class Session extends Thread implements DataChannel {
                     }
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
+                }
+            } else {            
+                if (requesttimeout != null) {
+                    requesttimeout.interrupt();
                 }
             }
 
@@ -916,7 +920,9 @@ public class Session extends Thread implements DataChannel {
             public void run() {
                 log(".......................................................  requesttimeout.RUN " + by);
                 try {
-                    wait(REQUEST_TIMEOUT);
+                    synchronized (requesttimeout_lock) {
+                        requesttimeout_lock.wait(REQUEST_TIMEOUT);
+                    }
                 } catch (InterruptedException ex) {
                     log(".......................................................  requesttimeout.INTERRUPT " + by);
                 }

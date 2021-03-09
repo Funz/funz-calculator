@@ -334,7 +334,7 @@ public class Session extends Thread implements DataChannel {
                 public void run() {
                     while (Session.this.calculator._launcher == Session.this.calculator._lastLauncher) {
                         try {
-                            sleep(100L);
+                            sleep(500L);
                         } catch (Exception e) {
                         }
                         synchronized (Session.this.calculator._launcherLock) {

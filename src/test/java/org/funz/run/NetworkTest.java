@@ -44,6 +44,9 @@ public class NetworkTest {
                 s.askToStop(true, "tearDown");
             }
         }
+        synchronized (calculator) {
+            calculator.notifyAll();
+        }
         tc.join();
 
         ui_client1.force_disconnect();

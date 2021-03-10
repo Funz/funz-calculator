@@ -44,11 +44,7 @@ public class ConfTest {
         loop = new Thread(new Runnable() {
 
             public void run() {
-                try {
                     calculator.runloop();
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
             }
         });
         loop.start();

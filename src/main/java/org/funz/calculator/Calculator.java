@@ -267,12 +267,10 @@ public class Calculator implements Protocol {
         }
     }
 
-    public void runloop() throws InterruptedException {
+    public void runloop() {
         log("Started");
         out("Started");
-        //calc.run();
         while (run()) {
-            Thread.sleep(PING_PERIOD);
             log("Restarted");
             out("Restarted");
         }
@@ -517,12 +515,10 @@ public class Calculator implements Protocol {
                 loadConf(_conf);
                 md5conf = newmd5;
                 setActivity(IDLE_STATE, "loadConf");
-                //run();//
                 return true;
             } catch (Exception e) {
                 md5conf = newmd5;
                 setActivity(UNAVAILABLE_STATE, "loadConf/exception");
-                //run();//
                 return true;
             }
         }
@@ -552,37 +548,6 @@ public class Calculator implements Protocol {
             ListIterator<Session> iter = _sessions.listIterator();
             iter.add(s);
         }
-    }
-
-    // receive connections in this loop
-    private void waitNewClient() {
-        while (!askToStop) {
-            try {
-                //if (!_serversocket.isClosed()) {
-                out("Accept connection on local adress " + _serversocket.getLocalSocketAddress());
-
-                log("Open server socket... (" + _serversocket + ")");
-                Session session = new Session(this, _serversocket.accept());
-                log("                  ...Server socket opened (" + _serversocket.toString() + ") !");
-
-                addSession(session);
-
-                log("Starting session...");
-                session.start();
-                log("               ...Session started.");
-            } catch (SocketException e) {
-                if (askToStop) {
-                    break;
-                }
-            } catch (Exception e) {
-                err("Failed to build session:" + e);
-                try {
-                    Thread.sleep(2 * PING_PERIOD);
-                } catch (InterruptedException ex) {
-                }
-            }
-        }
-        out("Stop waiting network client.");
     }
 
     static String[] monitors = "".split(",");
@@ -770,19 +735,51 @@ public class Calculator implements Protocol {
         
         destroySessions("Calculator.askToStop because " + why);
     }
-    public final Thread NetworkListener = new Thread("NetworkListener") {
+    
+    final Thread NetworkListener = new Thread("NetworkListener") {
 
-        public void run() {
-            waitNewClient();
+        public void run() {runNetworkListener();}};
+
+    public void runNetworkListener() {
+        while (!askToStop) {
+            try {
+                //System.err.println("L");
+                while (_serversocket==null || _serversocket.isClosed()) {
+                    Thread.sleep(1000); /// Just wait in case _serversocket was just created/re-created
+                }
+                //if (!_serversocket.isClosed()) {
+                out("Accept connection on local adress " + _serversocket.getLocalSocketAddress());
+
+                log("Open server socket... (" + _serversocket + ")");
+                Session session = new Session(this, _serversocket.accept());
+                log("                  ...Server socket opened (" + _serversocket.toString() + ") !");
+
+                addSession(session);
+
+                log("Starting session...");
+                session.start();
+                log("               ...Session started.");
+            } catch (SocketException e) {
+                if (askToStop) { // In case the socket was closed outside, shutdown quietly
+                    break;
+                }
+            } catch (Exception e) {
+                err("Failed to build session:" + e);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                }
+            }
         }
-    };
+        out("Stop waiting network client."); 
+    }
 
     /**
      * main loop
      *
      * @return restart or not
      */
-    public boolean run() {
+    boolean run() {
         if (NetworkListener.getState().equals(State.NEW)) {
             NetworkListener.start();
         }
@@ -795,21 +792,18 @@ public class Calculator implements Protocol {
                 log("(!) Ask for restart...");
                 return true;
             }
+
             for (int i = 0; i < _hosts.length; i++) {
                 Host h = _hosts[i];
                 if (h != null && !h.connected) {
                     h.ping();
                 }
             }
-
             try {
-                synchronized (this) {
-                    wait(PING_PERIOD);
-                }
+                Thread.sleep(PING_PERIOD); // Let time between ping
             } catch (Exception ee) {
                 ee.printStackTrace();
             }
-
         }
         log("Quit run loop");
         return false;

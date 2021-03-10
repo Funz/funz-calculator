@@ -93,7 +93,7 @@ public class NetworkReserveTest {
                         c.start();
 
                         synchronized (calculator) {
-                            calculator.wait(5000);
+                            calculator.wait(1000);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();

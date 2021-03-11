@@ -139,7 +139,7 @@ public class NetworkReserveTest {
 
     }
 
-    //@Test
+    @Test
     public void testReserveUnreserve() throws Exception { // 1 client: reserve, then unreserve
         System.err.println("+++++++++++++++++++++++++++++++++++++++++++++++++++ testReserveUnreserve");
 
@@ -171,7 +171,7 @@ public class NetworkReserveTest {
         }
     }
 
-    //@Test
+    @Test
     public void test2ReserveUnreserve() throws Exception {
         System.err.println("+++++++++++++++++++++++++++++++++++++++++++++++++++ test2ReserveUnreserve");
 
@@ -213,7 +213,7 @@ public class NetworkReserveTest {
         assert !ui_client2.isConnected() : "Failed to disconnect";
     }
 
-    //@Test
+    @Test
     public void testReserveNOUnreserve() throws Exception { // 1 client : reserve, and wait. session will auto unreserve before client did
         System.err.println("+++++++++++++++++++++++++++++++++++++++++++++++++++ testReserveNOUnreserve");
 
@@ -259,7 +259,7 @@ public class NetworkReserveTest {
         assert !ui_client1.isConnected() : "Failed to disconnect";
     }
 
-    //@Test
+    @Test
     public void testReserveNOUnreserveTimeout() throws Exception { // 2 clients : 1 reserve, and wait. session will auto unreserve before client 1 did, client 2 reserve, so client 1 cannot unreserve by itself
         System.err.println("+++++++++++++++++++++++++++++++++++++++++++++++++++ testReserveNOUnreserveTimeout");
         Project prj = new Project("test");

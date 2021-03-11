@@ -231,7 +231,7 @@ public class CalculatorTest {
         loop = new Thread(new Runnable() {
 
             public void run() {
-                    calculator.runloop();
+                    calculator.run();
             }
         });
         loop.start();

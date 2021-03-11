@@ -779,7 +779,7 @@ public class Calculator implements Protocol {
      *
      * @return restart or not
      */
-    boolean run() {
+    public boolean run() {
         if (NetworkListener.getState().equals(State.NEW)) {
             NetworkListener.start();
         }

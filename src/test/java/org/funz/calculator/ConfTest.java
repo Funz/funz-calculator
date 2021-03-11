@@ -44,7 +44,7 @@ public class ConfTest {
         loop = new Thread(new Runnable() {
 
             public void run() {
-                    calculator.runloop();
+                    calculator.run();
             }
         });
         loop.start();

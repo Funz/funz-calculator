@@ -230,8 +230,9 @@ public class NetworkReserveTest {
         Thread.sleep(2 * Session.RESERVE_TIMEOUT);
 
         //assert ui_client1.getActivity().contains("idle") : "Still reserved ?";
+        TimeOut t = null;
         try {
-            new TimeOut("ui_client1.unreserve") {
+            t = new TimeOut("ui_client1.unreserve") {
 
                 @Override
                 protected Object defaultResult() {
@@ -247,9 +248,11 @@ public class NetworkReserveTest {
                     }
                     return null;
                 }
-            }.execute(5000);
-            assert false : "No timeout";
+            };
+            t.execute(5000);
+            assert false : "No timeout"; // Should TimeOutException before
         } catch (TimeOut.TimeOutException te) {
+            assert true;
         }
 
         ui_client1.reserveTimeOut.interrupt();
@@ -257,6 +260,10 @@ public class NetworkReserveTest {
 
         ui_client1.force_disconnect();
         assert !ui_client1.isConnected() : "Failed to disconnect";
+
+        // Ensure no remaining thread...
+        t.end();
+        t.join(); 
     }
 
     @Test

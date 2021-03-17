@@ -42,6 +42,7 @@ public class NetworkReserveTest {
             }
         }
         }catch(Exception e){
+            e.printStackTrace();
         }
         try{
         for (Session s : sessions) {
@@ -50,6 +51,7 @@ public class NetworkReserveTest {
             }
         }
         }catch(Exception e){
+            e.printStackTrace();
         }
         synchronized (calculator) {
             calculator.notifyAll();

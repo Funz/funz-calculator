@@ -90,7 +90,8 @@ public class NetworkReserveTest {
                         } catch (IOException ex) {
                             ex.printStackTrace();
                         }
-                        c.start();
+                        if (c!=null)
+                            c.start();
 
                         synchronized (calculator) {
                             calculator.wait(1000);

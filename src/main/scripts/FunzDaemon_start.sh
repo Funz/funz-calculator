@@ -13,7 +13,7 @@ then
 CALCULATOR=file:calculator-`hostname`.xml
 fi
 
-FUNZ_HOME=$HOME/.Funz
+FUNZ_HOME=${FUNZ_HOME:-$HOME/.Funz}
 if [ ! -d $FUNZ_HOME ]
 then
 mkdir $FUNZ_HOME

@@ -804,8 +804,10 @@ public class Session extends Thread implements DataChannel {
                         sessionTimeoutStart(Calculator.METHOD_ARCH_RES);
                         archiveResults();
                     } else if (_method.equals(Calculator.METHOD_GET_ARCH)) {
+                        sessionTimeout_reset_period = 1000; // reset timeout counter each 1000 ms (as long as data blocks will be sent), to avoid session timeout when tranfer huge files
                         sessionTimeoutStart(Calculator.METHOD_GET_ARCH);
                         transferArchive();
+                        sessionTimeout_reset_period = REQUEST_TIMEOUT;
                     } else if (_method.equals(Calculator.METHOD_EXECUTE)) {
                         sessionTimeoutStop(true, Calculator.METHOD_EXECUTE); // _NO_ sessionTimeoutStart here, beccause we don't know how long it will take...
                         execute();
@@ -909,23 +911,28 @@ public class Session extends Thread implements DataChannel {
         }
     }
 
+    private volatile long sessionTimeout_waited = 0; // cumulative waited time
+    private long sessionTimeout_reset_period = REQUEST_TIMEOUT; // cumulative waited time
     private void sessionTimeoutStart(final String by) {
         sessionTimeoutStop(true, by);
+        sessionTimeout_waited = 0;
         requesttimeout = new Thread(new Runnable() {
             public void run() {
-                log(".......................................................  requesttimeout.RUN " + by);
-                try {
-                    sleep(REQUEST_TIMEOUT);
-                } catch (InterruptedException ex) {
-                    log(".......................................................  requesttimeout.INTERRUPT " + by);
+                while (sessionTimeout_waited < REQUEST_TIMEOUT) {
+                    log(".......................................................  requesttimeout.RUN " + by);
+                    try {
+                        sleep(sessionTimeout_reset_period);
+                        sessionTimeout_waited += sessionTimeout_reset_period;
+                    } catch (InterruptedException ex) {
+                        log(".......................................................  requesttimeout.INTERRUPT " + by);
+                    }
+                    if (!sessionTimeout) {
+                        log(".......................................................  requesttimeout.BROKEN " + by);
+                        return;
+                    } else {
+                        log(".......................................................    [request TIMEOUT] by " + by + " force stop because no interaction with client in " + REQUEST_TIMEOUT / 1000 + " s.");
+                    }
                 }
-                if (!sessionTimeout) {
-                    log(".......................................................  requesttimeout.BROKEN " + by);
-                    return;
-                } else {
-                    log(".......................................................    [request TIMEOUT] by " + by + " force stop because no interaction with client in " + REQUEST_TIMEOUT / 1000 + " s.");
-                }
-
                 try {
                     askToStop(false, ".......................................................    [request TIMEOUT] by " + by + " force stop because no interaction with client in " + REQUEST_TIMEOUT / 1000 + " s.");
                 } catch (Exception ex) {
@@ -994,6 +1001,7 @@ public class Session extends Thread implements DataChannel {
             long total, counter = 0, last = 0;
 
             public void newDataBlock(int size) {
+                sessionTimeout_waited = 0; // Reset sessionTimeOut counter between data blocks.
                 if (total == 0) {
                     return;
                 }

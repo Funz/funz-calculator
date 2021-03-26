@@ -852,8 +852,6 @@ public class Session extends Thread implements DataChannel {
             }
             log(" run.NOException");
         } catch (Exception e) {
-            err(" run.Exception " + e);
-
             //System.err.println("SYNC ? " + this.calculator._lock);
             if (this.calculator._reserver == this) {
                 this.calculator._reserver = null;
@@ -870,7 +868,7 @@ public class Session extends Thread implements DataChannel {
                 }
             }
             try {
-                if (_sock != null) {
+                if (_sock != null && !_sock.isClosed()) {
                     _sock.shutdownInput();
                     _sock.shutdownOutput();
                     _sock.close();

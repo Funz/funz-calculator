@@ -294,7 +294,7 @@
             <classpath refid="compile.path" />
             <classpath path="${build.dir}" />
             <jvmarg value="-Dapp.home=." />
-            <arg value="file:${calculator.xml}" />
+            <arg value="file:${dist.dir}/${calculator.xml}" />
         </java>
     </target>
 

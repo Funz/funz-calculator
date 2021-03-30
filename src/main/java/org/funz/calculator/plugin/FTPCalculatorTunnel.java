@@ -106,7 +106,7 @@ public class FTPCalculatorTunnel implements CalculatorTunnel, org.apache.ftpserv
             log("Start FTP server: " + uri);
             running = true;
         } catch (Exception ex) {
-            ex.printStackTrace(System.err);
+            ex.printStackTrace();
             uri = null;
         }
     }

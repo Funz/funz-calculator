@@ -3,6 +3,9 @@ package org.funz.calculator.plugin;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
+
+import javax.sql.rowset.serial.SerialRef;
+
 import org.funz.Constants;
 import org.funz.util.ParserUtils;
 import static org.funz.util.ParserUtils.getASCIIFileLines;
@@ -30,6 +33,7 @@ public class DefaultCodeLauncher extends CodeLauncher {
         }catch(Error e){
             System.err.println("Could not instanciate FTP Calculator Tunnel");
         }
+        System.err.println("tunnel "+tunnel);
         _plugin.setDataChannel(new CalculatorTunnel.DataChannelTunnel(_plugin.getDataChannel(), tunnel));
         shutdown = new Thread(new Runnable() {
             public void run() {
@@ -50,7 +54,7 @@ public class DefaultCodeLauncher extends CodeLauncher {
             _progressSender = new DataVolumeReader(this);
         }
         _progressSender.start();
-        //tunnel.start();
+        tunnel.start();
         return runCommand();
     }
 

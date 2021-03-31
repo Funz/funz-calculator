@@ -3,6 +3,7 @@ package org.funz.calculator.plugin;
 import java.io.File;
 import java.util.LinkedList;
 import org.junit.Before;
+import org.junit.After;
 import org.junit.Test;
 import org.funz.util.Disk;
 import static org.funz.util.ParserUtils.getASCIIFileContent;
@@ -22,6 +23,11 @@ public class DefaultCodeLauncherTest {
     @Before
     public void setUp() {
         launcher = new DefaultCodeLauncher(new DefaultCalculatorPlugin());
+    }
+
+    @After
+    public void tearDown() {
+        launcher.stopRunning();
     }
 
     @Test

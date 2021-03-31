@@ -10,10 +10,13 @@ import org.apache.ftpserver.ConnectionConfigFactory;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.UserManager;
+import org.apache.ftpserver.impl.DefaultFtpServer;
 import org.apache.ftpserver.listener.ListenerFactory;
+import org.apache.ftpserver.listener.nio.NioListener;
 import org.apache.ftpserver.usermanager.PropertiesUserManagerFactory;
 import org.apache.ftpserver.usermanager.impl.BaseUser;
 import org.apache.mina.core.session.IoSession;
+import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.funz.calculator.network.Session;
 
 /**
@@ -61,13 +64,16 @@ public class FTPCalculatorTunnel implements CalculatorTunnel, org.apache.ftpserv
             FtpServerFactory serverFactory = new FtpServerFactory();
             ListenerFactory factory = new ListenerFactory();
 
-// set the port of the listener
+            // set the port of the listener
             int port = 2100 + (int) (100 * Math.random());
             ServerSocket test = null;
-            while (true) {
+            int i=0;
+            boolean found = false;
+            while ((i++)<20) {
                 try {
                     test = new ServerSocket(port);
                     factory.setPort(port);
+                    found = true;
                     break;
                 } catch (BindException e) {
                     port++;
@@ -81,10 +87,11 @@ public class FTPCalculatorTunnel implements CalculatorTunnel, org.apache.ftpserv
                         }
                 }
             }
+            if (!found) throw new Exception("Could not find a free FTP port.");
 
             factory.setSessionFilter(this);
             serverFactory.addListener("default", factory.createListener());
-
+            
             ConnectionConfigFactory connectionConfigFactory = new ConnectionConfigFactory();
             connectionConfigFactory.setAnonymousLoginEnabled(true);
             serverFactory.setConnectionConfig(connectionConfigFactory.createConnectionConfig());
@@ -100,7 +107,7 @@ public class FTPCalculatorTunnel implements CalculatorTunnel, org.apache.ftpserv
             serverFactory.setUserManager(um);
 
             server = serverFactory.createServer();
-            
+
             server.start();
             uri = "ftp://" + Session.localIP + ":" + factory.getPort();
             log("Start FTP server: " + uri);
@@ -117,9 +124,10 @@ public class FTPCalculatorTunnel implements CalculatorTunnel, org.apache.ftpserv
                 server.stop();
                 server = null;
                 log("Stop FTP server: " + uri);
+                running = false;
             }
         } catch (Exception ex) {
-            ex.printStackTrace(System.err);
+            ex.printStackTrace();
         }
     }
 

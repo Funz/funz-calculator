@@ -3,9 +3,6 @@ package org.funz.calculator.plugin;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
-
-import javax.sql.rowset.serial.SerialRef;
-
 import org.funz.Constants;
 import org.funz.util.ParserUtils;
 import static org.funz.util.ParserUtils.getASCIIFileLines;
@@ -33,11 +30,11 @@ public class DefaultCodeLauncher extends CodeLauncher {
         }catch(Error e){
             System.err.println("Could not instanciate FTP Calculator Tunnel");
         }
-        System.err.println("tunnel "+tunnel);
         _plugin.setDataChannel(new CalculatorTunnel.DataChannelTunnel(_plugin.getDataChannel(), tunnel));
         shutdown = new Thread(new Runnable() {
             public void run() {
                 stopRunning();
+                if (tunnel!=null) tunnel.stop();
             }
         });
         Runtime.getRuntime().addShutdownHook(shutdown);
@@ -184,7 +181,7 @@ public class DefaultCodeLauncher extends CodeLauncher {
             }
             }
         }
-
+        if (tunnel!=null) tunnel.stop();
         return ret;
     }
 
@@ -194,12 +191,12 @@ public class DefaultCodeLauncher extends CodeLauncher {
      * @param int exitCode return status.
      */
     public void executionOver(int exitCode) throws Exception {
+        if (tunnel != null) {
+            tunnel.stop();
+        }
         if (_progressSender != null) {
             _progressSender.askToStop();
             _progressSender.join();
-        }
-        if (tunnel != null) {
-            tunnel.stop();
         }
         if (shutdown != null && !shutdown.isAlive()) {
             try {
@@ -260,13 +257,14 @@ public class DefaultCodeLauncher extends CodeLauncher {
      * kill -2, -15, -9 in Unix) for each integer in this file.
      */
     public void stopRunning() {
-        if (_progressSender != null) {
-            _progressSender.askToStop();
-        }
         if (tunnel != null) {
             tunnel.stop();
             tunnel = null;
+        }        
+        if (_progressSender != null) {
+            _progressSender.askToStop();
         }
+
         if (_process != null) {
             _process.stop();
         }

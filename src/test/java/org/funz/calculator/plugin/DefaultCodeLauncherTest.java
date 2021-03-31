@@ -25,11 +25,6 @@ public class DefaultCodeLauncherTest {
         launcher = new DefaultCodeLauncher(new DefaultCalculatorPlugin());
     }
 
-    @After
-    public void tearDown() {
-        launcher.stopRunning();
-    }
-
     @Test
     public void testExecuteOK() throws Exception {
         System.err.println("++++++++++++++++++++++++++++++ testExecuteOK");
@@ -63,6 +58,8 @@ public class DefaultCodeLauncherTest {
         assert Rout.exists() : "R output file not found";
         String contentRout = getASCIIFileContent(Rout);
         assert contentRout.contains(getASCIIFileContent(Rin)) : "bad execution";
+
+        launcher.stopRunning();
     }
 
     @Test
@@ -97,6 +94,8 @@ public class DefaultCodeLauncherTest {
         assert Rout.exists() : "R output file not found";
         String contentRout = getASCIIFileContent(Rout);
         assert contentRout.contains(getASCIIFileContent(Rin)) : "bad execution";
+
+        launcher.stopRunning();
     }
 
     @Test
@@ -131,5 +130,7 @@ public class DefaultCodeLauncherTest {
         assert Rout.exists() : "R output file not found";
         String contentRout = getASCIIFileContent(Rout);
         assert contentRout.contains(getASCIIFileContent(Rin)) : "bad execution";
+
+        launcher.stopRunning();
     }
 }

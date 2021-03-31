@@ -6,6 +6,9 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.ftpserver.ConnectionConfigFactory;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
@@ -51,11 +54,13 @@ public class FTPCalculatorTunnel implements CalculatorTunnel, org.apache.ftpserv
         //System.err.println(msg);
     }
 
+    List<IoSession> sessions = new LinkedList<>();
     public boolean accept(IoSession is) {
         if (!ip_filter) {
             return true;
         }
         log("IP filter: " + is.getRemoteAddress() + " (authorized=" + auth_host + ")");
+        sessions.add(is);
         return is.getRemoteAddress().equals(auth_host);
     }
 
@@ -119,6 +124,15 @@ public class FTPCalculatorTunnel implements CalculatorTunnel, org.apache.ftpserv
     }
 
     public void stop() {
+        for (IoSession ioSession : sessions) {
+            if (ioSession.isActive()) {
+                log("Closing FTP session: " + ioSession);
+                try{
+                    ioSession.closeNow().await(3*1000);
+                }catch(InterruptedException e){}
+            }
+        }
+        
         try {
             if (running) {
                 server.stop();

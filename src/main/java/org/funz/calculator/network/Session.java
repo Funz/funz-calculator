@@ -511,6 +511,14 @@ public class Session extends Thread implements DataChannel {
         }
         if (this.calculator._dir.isDirectory() || this.calculator._dir.mkdirs()) {
             Disk.emptyDir(this.calculator._dir);
+            int tries = 0;
+            while ((tries++)<10) {
+                File[] in = Disk.listRecursiveFiles(this.calculator._dir);
+                if (in.length==0) break;
+                Disk.emptyDir(this.calculator._dir);
+                sleep(1000);
+            }
+            // in the end, could not cleanup...
             if (Disk.listRecursiveFiles(this.calculator._dir).length > 0) {
                 throw new IOException("Could not clean directory " + this.calculator._dir);
             }

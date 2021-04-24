@@ -510,12 +510,20 @@ public class Session extends Thread implements DataChannel {
             this.calculator._dir = new File(this.calculator._spool + File.separator + this.calculator._name + File.separator + this.calculator._port + File.separator + "spool");
         }
         if (this.calculator._dir.isDirectory() || this.calculator._dir.mkdirs()) {
-            Disk.emptyDir(this.calculator._dir);
+            try {
+                Disk.emptyDir(this.calculator._dir);
+            } catch (IOException e) {
+                err(e.getMessage());
+            }
             int tries = 0;
             while ((tries++)<10) {
                 File[] in = Disk.listRecursiveFiles(this.calculator._dir);
                 if (in.length==0) break;
-                Disk.emptyDir(this.calculator._dir);
+                try {
+                    Disk.emptyDir(this.calculator._dir);
+                } catch (IOException e) {
+                    err(e.getMessage());
+                }
                 sleep(1000);
             }
             // in the end, could not cleanup...

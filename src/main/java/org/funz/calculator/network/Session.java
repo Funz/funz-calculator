@@ -526,9 +526,13 @@ public class Session extends Thread implements DataChannel {
                 }
                 sleep(1000);
             }
-            // in the end, could not cleanup...
+            // in the end, could not cleanup... (e.g. maybe because nfs latency)
             if (Disk.listRecursiveFiles(this.calculator._dir).length > 0) {
-                throw new IOException("Could not clean directory " + this.calculator._dir);
+                err("Could not clean directory " + this.calculator._dir);
+                //throw new IOException("Could not clean directory " + this.calculator._dir);
+                this.calculator._dir = new File(this.calculator._dir.getParentFile(),"spool."+Math.round(Math.random()*9999));
+                err("Trying to use new spool directory " + this.calculator._dir);
+                if (!this.calculator._dir.mkdirs()) throw new IOException("Could not create new directory " + this.calculator._dir);
             }
             returnYES();
         } else {

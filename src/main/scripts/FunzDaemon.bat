@@ -1,5 +1,7 @@
 @echo off
 
+cd %~dp0
+
 SET MAIN=org.funz.calculator.Calculator
 
 setLocal EnableDelayedExpansion

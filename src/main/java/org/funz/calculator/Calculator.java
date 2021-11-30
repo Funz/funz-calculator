@@ -62,7 +62,10 @@ public class Calculator implements Protocol {
     static double freecpu = 0;
     static double G = 1024 * 1024 * 1024;
     static NumberFormat nf = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.ENGLISH));
-    private static Sigar sigar = new Sigar();
+    static Sigar sigar = null;
+    static {
+        sigar = new Sigar();
+    }
 
     static String trimBin(long d) {
         return nf.format((double) d / G);
@@ -136,6 +139,7 @@ public class Calculator implements Protocol {
                 mem = sys.getFreePhysicalMemorySize();
                 freecpu = (double) sys.getAvailableProcessors();//Math.max(0, (double) sys.getAvailableProcessors() - sys.getSystemLoadAverage());
             } else {
+                if (sigar != null)
                 try {
                     mem = sigar.getMem().getActualFree();
                     CpuPerc[] cpus = sigar.getCpuPercList();

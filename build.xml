@@ -112,6 +112,9 @@
             <fileset dir="${build.dir}">
                 <include name="org/funz/calculator/**" />
             </fileset>
+            <fileset dir="${src.dir}">
+                <include name="org/funz/calculator/**" />
+            </fileset>
             <manifest>
                 <attribute name="Main-Class" value="org.funz.calculator.Calculator" />
             </manifest>

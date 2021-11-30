@@ -64,7 +64,11 @@ public class Calculator implements Protocol {
     static NumberFormat nf = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.ENGLISH));
     static Sigar sigar = null;
     static {
-        sigar = new Sigar();
+        try{
+            sigar = new Sigar();
+        } catch (Exception e) {
+            System.err.println("Sigar not available: "+e.getMessage());
+        }
     }
 
     static String trimBin(long d) {

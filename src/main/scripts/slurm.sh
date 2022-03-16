@@ -35,7 +35,7 @@ if [ ! "$SBATCH_OPT_in""zz" = "zz" ] ; then
 fi
 echo "SBATCH: "$SBATCH_OPT >> log.txt
 
-echo "SUBMIT: "$SUMIT >> log.txt
+echo "SUBMIT: "$SUBMIT >> log.txt
 $SUBMIT -J $qname $SBATCH_OPT --chdir=$cwd $cmd $input >> out.txt &
 mid=$!
 

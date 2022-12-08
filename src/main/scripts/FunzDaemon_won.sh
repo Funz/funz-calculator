@@ -12,7 +12,7 @@ LISTEN_PORT="19000"
 FUNZ_PATH=`dirname $0`
 CALCULATORS=10
 PORTS=( "19001" "19002" "19003" "19004" ) # May be read from message, also
-export FUNZ_HOME=/SCRATCH/PROMETHEE/HYDRO
+export FUNZ_HOME=/SCRATCH/FUNZ
 
 # Uncomment your NetCat version:
 #NCAT="nc -nvFl" ## OpenBSD NetCat

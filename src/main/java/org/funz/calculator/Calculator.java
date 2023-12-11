@@ -1,6 +1,7 @@
 package org.funz.calculator;
 
-import java.net.MalformedURLException;
+import java.net.*;
+
 import org.funz.calculator.network.Host;
 import org.funz.calculator.network.Session;
 import java.lang.Thread.State;
@@ -9,12 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -42,6 +37,9 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ListIterator;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.exec.OS;
 import org.hyperic.sigar.CpuPerc;
 import org.funz.log.LogCollector;
@@ -323,6 +321,8 @@ public class Calculator implements Protocol {
     public String _name = "untitled";
     public HashMap _plugins = new HashMap();
     public int _port = -1;
+    public int _portMin = -1;
+    public int _portMax = -1;
     public Session _reserver = null;
     public String _secretCode;
     public File _sessionDir;
@@ -605,10 +605,36 @@ public class Calculator implements Protocol {
 
         _comment = e.getAttribute(ATTR_COMMENT);
 
+        _port = 0;
+        _portMax = -1;
+        _portMin = -1;
+        // Parse port=port_number or port=[min_port, max_port]
         try {
-            _port = Integer.parseInt(e.getAttribute(ATTR_PORT));
+            if(e.hasAttribute(ATTR_PORT)) {
+                String portString = e.getAttribute(ATTR_PORT);
+                boolean portParsed = false;
+                try {
+                    _port = Integer.valueOf(portString);
+                    portParsed = true;
+                } catch (Exception exception) {
+                    // nothing to do
+                }
+                if(!portParsed) {
+                    Pattern pattern = Pattern.compile("\\[([0-9]+),\\s([0-9]+)\\]");// regex = [min_port, max_port]
+                    Matcher m = pattern.matcher(portString);
+                    if (m.find() && m.groupCount() == 2) {
+                        int minPort = Integer.valueOf(m.group(1));
+                        int maxPort = Integer.valueOf(m.group(2));
+                        if(minPort <= maxPort) {
+                            this._portMin = minPort;
+                            this._portMax = maxPort;
+                        }
+                    }
+                }
+            }
+
         } catch (Exception ex) {
-            _port = 0;
+            //ex.printStackTrace();
         }
 
         _spool = e.getAttribute(ATTR_SPOOL);
@@ -658,13 +684,8 @@ public class Calculator implements Protocol {
         if (_serversocket != null) {
             _serversocket.close(); // if reloading...
         }
-        _serversocket = new ServerSocket(_port) {
-            @Override
-            public String toString() {
-                return "Server socket on port " + _port + " " + super.toString();
-            }
-        };
-        _port = _serversocket.getLocalPort();
+
+        createServerSocket();
 
         NodeList hosts = e.getElementsByTagName(ELEM_HOST);
 
@@ -712,6 +733,42 @@ public class Calculator implements Protocol {
             _unavailable_tests[i] = ((Element) unavb_if.item(i)).getAttribute(ATTR_TEST);
         }
     }
+
+    private void createServerSocket() throws BindException {
+        if(_portMin != -1 && _portMax != -1) {
+            for(int port=_portMin; port<=_portMax; port++) {
+                try {
+                    int finalPort = port;
+                    _serversocket = new ServerSocket(finalPort) {
+                        @Override
+                        public String toString() {
+                            return "Server socket on port " + finalPort + " " + super.toString();
+                        }
+                    };
+                    break;
+                } catch (IOException e) {
+                    //e.printStackTrace();
+                }
+            }
+        } else {
+            try {
+                _serversocket = new ServerSocket(_port) {
+                    @Override
+                    public String toString() {
+                        return "Server socket on port " + _port + " " + super.toString();
+                    }
+                };
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if(_serversocket!=null) {
+            _port = _serversocket.getLocalPort();
+        } else {
+            throw new BindException("No free port for the ServerSocker");
+        }
+    }
+
     private volatile boolean askToStop = false;
 
     public boolean isAskToStop() {

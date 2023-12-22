@@ -86,8 +86,9 @@ public class DefaultCodeLauncher extends CodeLauncher {
     protected int runCommand() throws Exception {
         File prebat = new File(_dir, "PRE.bat");
         if (prebat.isFile()) {
+            System.err.println("Launching PRE.bat");
             try {
-                Runtime.getRuntime().exec("cmd.exe " + prebat.getName());
+                new org.funz.util.Process("cmd.exe " + prebat.getName(), _dir, null).runCommand();
             } catch (Exception e) {
                 System.err.println("could not launch PRE.bat:\n" + e);
             }
@@ -95,8 +96,9 @@ public class DefaultCodeLauncher extends CodeLauncher {
 
         File presh = new File(_dir, "PRE.sh");
         if (presh.isFile()) {
+            System.err.println("Launching PRE.sh");
             try {
-                Runtime.getRuntime().exec("/bin/sh " + presh.getName());
+                new org.funz.util.Process("/bin/sh " + presh.getName(), _dir, null).runCommand();
             } catch (Exception e) {
                 System.err.println("could not launch PRE.sh:\n" + e);
             }
@@ -104,21 +106,22 @@ public class DefaultCodeLauncher extends CodeLauncher {
 
         File prepy = new File(_dir, "PRE.py");
         if (prepy.isFile()) {
+            System.err.println("Launching PRE.py");
             if (ParserUtils.getASCIIFileContent(prepy).contains("print(")) {
                 try {
-                    Runtime.getRuntime().exec("python3 " + prepy.getName());
+                    new org.funz.util.Process("python3 " + prepy.getName(), _dir, null).runCommand();
                 } catch (Exception e) {
                     System.err.println("could not launch PRE.py:\n" + e);
                 }
             } else if (ParserUtils.getASCIIFileContent(prepy).contains("print ")) {
                 try {
-                    Runtime.getRuntime().exec("python2 " + prepy.getName());
+                    new org.funz.util.Process("python2 " + prepy.getName(), _dir, null).runCommand();
                 } catch (Exception e) {
                     System.err.println("could not launch PRE.py:\n" + e);
                 }
             } else {
                 try {
-                    Runtime.getRuntime().exec("python " + prepy.getName());
+                    new org.funz.util.Process("python " + prepy.getName(), _dir, null).runCommand();
                 } catch (Exception e) {
                     System.err.println("could not launch PRE.py:\n" + e);
                 }
@@ -142,8 +145,9 @@ public class DefaultCodeLauncher extends CodeLauncher {
         if (ret == 0) {
             File postbat = new File(_dir, "POST.bat");
             if (postbat.isFile()) {
+                System.err.println("Launching POST.bat");
                 try {
-                    Runtime.getRuntime().exec("cmd.exe " + postbat.getName());
+                    new org.funz.util.Process("cmd.exe " + postbat.getName(), _dir, null).runCommand();
                 } catch (Exception e) {
                     System.err.println("could not launch POST.bat:\n" + e);
                 }
@@ -151,8 +155,9 @@ public class DefaultCodeLauncher extends CodeLauncher {
 
             File postsh = new File(_dir, "POST.sh");
             if (postsh.isFile()) {
+                System.err.println("Launching POST.sh");
                 try {
-                    Runtime.getRuntime().exec("/bin/sh " + postsh.getName());
+                    new org.funz.util.Process("/bin/sh " + postsh.getName(), _dir, null).runCommand();
                 } catch (Exception e) {
                     System.err.println("could not launch POST.sh:\n" + e);
                 }
@@ -160,25 +165,27 @@ public class DefaultCodeLauncher extends CodeLauncher {
 
             File postpy = new File(_dir, "POST.py");
             if (postpy.isFile()) {
+                System.err.println("Launching POST.py");
                 if (ParserUtils.getASCIIFileContent(postpy).contains("print(")) {
-                try {
-                    Runtime.getRuntime().exec("python3 " + postpy.getName());
-                } catch (Exception e) {
-                    System.err.println("could not launch POST.py:\n" + e);
+                    try {
+                        new org.funz.util.Process("python3 " + postpy.getName(), _dir, null).runCommand();
+                        //new org.funz.util.Process("python3 " + postpy.getName());
+                    } catch (Exception e) {
+                        System.err.println("could not launch POST.py:\n" + e);
+                    }
+                } else if (ParserUtils.getASCIIFileContent(postpy).contains("print ")) {
+                    try {
+                        new org.funz.util.Process("python2 " + postpy.getName(), _dir, null).runCommand();
+                    } catch (Exception e) {
+                        System.err.println("could not launch POST.py:\n" + e);
+                    }
+                } else {
+                    try {
+                        new org.funz.util.Process("python " + postpy.getName(), _dir, null).runCommand();
+                    } catch (Exception e) {
+                        System.err.println("could not launch POST.py:\n" + e);
+                    }
                 }
-            } else if (ParserUtils.getASCIIFileContent(postpy).contains("print ")) {
-                try {
-                    Runtime.getRuntime().exec("python2 " + postpy.getName());
-                } catch (Exception e) {
-                    System.err.println("could not launch POST.py:\n" + e);
-                }
-            } else {
-                try {
-                    Runtime.getRuntime().exec("python " + postpy.getName());
-                } catch (Exception e) {
-                    System.err.println("could not launch POST.py:\n" + e);
-                }
-            }
             }
         }
         if (tunnel!=null) tunnel.stop();
@@ -271,8 +278,9 @@ public class DefaultCodeLauncher extends CodeLauncher {
 
         File killbat = new File(_dir, "STOP.bat");
         if (killbat.isFile()) {
+            System.err.println("Launching STOP.bat");
             try {
-                Runtime.getRuntime().exec("cmd.exe " + killbat.getName());
+                new org.funz.util.Process("cmd.exe " + killbat.getName(), _dir, null).runCommand();
             } catch (Exception e) {
                 System.err.println("could not launch STOP.bat:\n" + e);
             }
@@ -281,8 +289,9 @@ public class DefaultCodeLauncher extends CodeLauncher {
 
         File killsh = new File(_dir, "STOP.sh");
         if (killsh.isFile()) {
+            System.err.println("Launching STOP.sh");
             try {
-                Runtime.getRuntime().exec("/bin/sh " + killsh.getName());
+                new org.funz.util.Process("/bin/sh " + killsh.getName(), _dir, null).runCommand();
             } catch (Exception e) {
                 System.err.println("could not launch STOP.sh:\n" + e);
             }

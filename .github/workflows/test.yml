@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        java: [8, 11, 13]
+        java: [11]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -55,7 +55,7 @@ jobs:
       id: anttest
       continue-on-error: true
     - if: steps.anttest.outcome != 'success'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: artifacts-${{ matrix.os }}-${{ matrix.java }}
         path: |
